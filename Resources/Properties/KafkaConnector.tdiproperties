@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="ec563a89-e217-486e-a341-50de7038a1b7" created="Sat Apr 18 11:23:04 CEST 2026" createdBy="eddiehartman" modified="Sat Apr 18 11:23:04 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+    <Container>
+        <Container name="Data"/>
+        <Properties name="Config">
+            <Stores>
+                <PropertyStore name="KafkaConnector">
+                    <Parser/>
+                    <RawConnector>
+                        <InheritFrom>system:/Connectors/ibmdi.Properties</InheritFrom>
+                        <parameter name="collection">@SUBSTITUTE{config.$directory}/KafkaConnector.properties</parameter>
+                        <parameter name="collectionType">KafkaConnector</parameter>
+                    </RawConnector>
+                    <Key>key</Key>
+                    <Value>value</Value>
+                    <ReadOnly>false</ReadOnly>
+                    <InitialLoad>true</InitialLoad>
+                    <CacheTimeout>0</CacheTimeout>
+                </PropertyStore>
+            </Stores>
+        </Properties>
+    </Container>
+</MetamergeConfig>
