@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="13" UUID="663db124-39ce-4c93-839a-43b4385e6aa2" created="Tue Apr 21 13:10:36 CEST 2026" createdBy="eddiehartman" main="test_KafkaConnector" modified="Tue Apr 21 20:11:26 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+    <AssemblyLine name="test_KafkaConnector">
+        <ModTime>1776795086000</ModTime>
+        <Settings/>
+        <Hooks/>
+        <CheckpointConfig/>
+        <SandboxConfig/>
+        <SimulationConfig>
+            <SimulationStates>
+                <Component name="reusableConnector" state="Simulated"/>
+                <Component name="Add message" state="Simulated"/>
+                <Component name="message" state="Enabled"/>
+                <Component name="DumpWorkEntry" state="Enabled"/>
+            </SimulationStates>
+            <ProxySettings/>
+        </SimulationConfig>
+        <LogConfig/>
+        <ContainerEF name="EntryFeedContainer">
+            <ModTime>1776769898225</ModTime>
+        </ContainerEF>
+        <ContainerDF name="DataFlowContainer">
+            <ModTime>1776795086000</ModTime>
+            <Connector name="reusableConnector">
+                <InheritFrom>/Connectors/KafkaConnector</InheritFrom>
+                <ModTime>1776775938189</ModTime>
+                <ConnectorMode>AddOnly</ConnectorMode>
+                <ConnectorState>Passive</ConnectorState>
+                <Configuration>
+                    <InheritFrom>[parent]</InheritFrom>
+                </Configuration>
+                <Parser>
+                    <InheritFrom>[parent]</InheritFrom>
+                </Parser>
+                <AttributeMap name="Input">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776769898225</ModTime>
+                    <AttributeMapItem>
+                        <Name>*</Name>
+                        <Type>simple</Type>
+                        <Simple>*</Simple>
+                    </AttributeMapItem>
+                </AttributeMap>
+                <AttributeMap name="Output">
+                    <InheritFrom>[parent]</InheritFrom>
+                </AttributeMap>
+                <DeltaSettings>
+                    <ModTime>1776769889222</ModTime>
+                    <WhenToCommit>After every database operation</WhenToCommit>
+                    <RowLocking>SERIALIZABLE</RowLocking>
+                    <ChangeDetectionMode>DETECT_ALL</ChangeDetectionMode>
+                </DeltaSettings>
+                <Schema name="Input">
+                    <InheritFrom>[parent]</InheritFrom>
+                </Schema>
+                <Schema name="Output">
+                    <InheritFrom>[parent]</InheritFrom>
+                </Schema>
+                <LinkCriteria>
+                    <InheritFrom>[parent]</InheritFrom>
+                </LinkCriteria>
+                <Hooks>
+                    <InheritFrom>[parent]</InheritFrom>
+                </Hooks>
+                <CheckpointConfig/>
+                <SandboxConfig/>
+                <Reconnect>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ReconnectRules/>
+                </Reconnect>
+                <Operations/>
+                <PoolDefinition>
+                    <InheritFrom>[parent]</InheritFrom>
+                </PoolDefinition>
+                <PoolInstance/>
+            </Connector>
+            <Connector name="Add message">
+                <InheritFrom>@reusableConnector</InheritFrom>
+                <ModTime>1776795086000</ModTime>
+                <ConnectorMode>AddOnly</ConnectorMode>
+                <ConnectorState>Enabled</ConnectorState>
+                <Configuration>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225808</ModTime>
+                    <parameter name="connectorType">@reusableConnector</parameter>
+                </Configuration>
+                <Parser>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </Parser>
+                <AttributeMap name="Input">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </AttributeMap>
+                <AttributeMap name="Output">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776794621598</ModTime>
+                    <AttributeMapItem>
+                        <Name>action</Name>
+                        <Type>advanced</Type>
+                        <Script>"worship"</Script>
+                        <Simple>action</Simple>
+                    </AttributeMapItem>
+                    <AttributeMapItem>
+                        <Name>dept</Name>
+                        <Type>advanced</Type>
+                        <Script>"DevOps"</Script>
+                        <Simple>dept</Simple>
+                    </AttributeMapItem>
+                    <AttributeMapItem>
+                        <Name>employeeId</Name>
+                        <Type>advanced</Type>
+                        <Script>"TDI007"</Script>
+                        <Simple>employee_Id</Simple>
+                    </AttributeMapItem>
+                    <AttributeMapItem>
+                        <Name>id</Name>
+                        <Type>advanced</Type>
+                        <Script>"TDI007"</Script>
+                        <Simple>id</Simple>
+                    </AttributeMapItem>
+                </AttributeMap>
+                <DeltaSettings/>
+                <Schema name="Input">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225802</ModTime>
+                </Schema>
+                <Schema name="Output">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </Schema>
+                <LinkCriteria>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </LinkCriteria>
+                <Hooks>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776795086000</ModTime>
+                    <Hook name="after_add">
+                        <InheritFrom>[no inheritance]</InheritFrom>
+                        <ModTime>1776795086000</ModTime>
+                        <Name>after_add</Name>
+                        <Script>task.logmsg(thisConnector.getName() + " - added: " + conn)</Script>
+                        <Enabled>true</Enabled>
+                    </Hook>
+                </Hooks>
+                <CheckpointConfig/>
+                <SandboxConfig/>
+                <Reconnect>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ReconnectRules/>
+                </Reconnect>
+                <Operations/>
+                <PoolDefinition>
+                    <InheritFrom>[parent]</InheritFrom>
+                </PoolDefinition>
+                <PoolInstance/>
+            </Connector>
+            <Loop name="message">
+                <ModTime>1776776140790</ModTime>
+                <LoopType>1</LoopType>
+                <Connector name="Connector Loop">
+                    <InheritFrom>@reusableConnector</InheritFrom>
+                    <ModTime>1776776140790</ModTime>
+                    <ConnectorMode>Iterator</ConnectorMode>
+                    <ConnectorState>Passive</ConnectorState>
+                    <Configuration>
+                        <InheritFrom>[parent]</InheritFrom>
+                        <ModTime>1776775970322</ModTime>
+                        <parameter name="connectorType">@reusableConnector</parameter>
+                        <parameter name="parserOption">Useless</parameter>
+                    </Configuration>
+                    <Parser>
+                        <InheritFrom>[parent]</InheritFrom>
+                    </Parser>
+                    <AttributeMap name="Input">
+                        <InheritFrom>[parent]</InheritFrom>
+                    </AttributeMap>
+                    <AttributeMap name="Output"/>
+                    <DeltaSettings>
+                        <ModTime>1776775970715</ModTime>
+                        <UniqueAttribute/>
+                        <WhenToCommit>After every database operation</WhenToCommit>
+                        <RowLocking>SERIALIZABLE</RowLocking>
+                        <ChangeDetectionMode>DETECT_ALL</ChangeDetectionMode>
+                    </DeltaSettings>
+                    <Schema name="Input">
+                        <InheritFrom>[parent]</InheritFrom>
+                    </Schema>
+                    <Schema name="Output">
+                        <UserComment>{extsyntax=TEXTAREA, name=userComment, sample=Your own comments go here}</UserComment>
+                        <InheritFrom>[no inheritance]</InheritFrom>
+                        <ModTime>1776775965557</ModTime>
+                        <SchemaItem>
+                            <Name>debug</Name>
+                            <NativeSyntax>boolean</NativeSyntax>
+                        </SchemaItem>
+                        <SchemaItem>
+                            <Name>exclusiveLock</Name>
+                            <NativeSyntax>boolean</NativeSyntax>
+                        </SchemaItem>
+                        <SchemaItem>
+                            <Name>fileAppend</Name>
+                            <NativeSyntax>boolean</NativeSyntax>
+                        </SchemaItem>
+                        <SchemaItem>
+                            <Name>fileAwaitDataTimeout</Name>
+                            <NativeSyntax>DROPEDIT</NativeSyntax>
+                        </SchemaItem>
+                        <SchemaItem>
+                            <Name>filePath</Name>
+                        </SchemaItem>
+                        <SchemaItem>
+                            <Name>userComment</Name>
+                            <NativeSyntax>TEXTAREA</NativeSyntax>
+                        </SchemaItem>
+                    </Schema>
+                    <LinkCriteria/>
+                    <Hooks>
+                        <InheritFrom>[parent]</InheritFrom>
+                        <ModTime>1776776140790</ModTime>
+                        <Hook name="before_getnext">
+                            <InheritFrom>[no inheritance]</InheritFrom>
+                            <ModTime>1776776140790</ModTime>
+                            <Name>before_getnext</Name>
+                            <Script>work.removeAllAttributes()</Script>
+                            <Enabled>true</Enabled>
+                        </Hook>
+                    </Hooks>
+                    <CheckpointConfig/>
+                    <SandboxConfig/>
+                    <Reconnect>
+                        <InheritFrom>[parent]</InheritFrom>
+                        <ReconnectRules/>
+                    </Reconnect>
+                    <Operations/>
+                    <PoolDefinition>
+                        <InheritFrom>[parent]</InheritFrom>
+                    </PoolDefinition>
+                    <PoolInstance/>
+                </Connector>
+                <Branch name="message">
+                    <ModTime>1776776140790</ModTime>
+                    <Script name="DumpWorkEntry">
+                        <ModTime>1776775827447</ModTime>
+                        <parameter name="script"><![CDATA[// Dump the work entry
+if (work.size() === 0) task.shutdown()
+else task.dumpEntry(work);]]></parameter>
+                    </Script>
+                    <Conditions/>
+                    <MatchAny>false</MatchAny>
+                    <Enabled>true</Enabled>
+                    <Type>0</Type>
+                </Branch>
+            </Loop>
+        </ContainerDF>
+        <ThreadOptions/>
+        <Operations/>
+        <InitParams>
+            <Schema name="AssemblyLineInitParams"/>
+        </InitParams>
+    </AssemblyLine>
+</MetamergeConfig>

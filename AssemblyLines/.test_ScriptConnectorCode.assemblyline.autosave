@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="7a084244-2c3d-4c9b-bbb2-7bf14094f669" created="Tue Apr 21 13:10:37 CEST 2026" createdBy="eddiehartman" main="_testScriptConnectorCode" modified="Tue Apr 21 13:10:38 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
-    <AssemblyLine name="_testScriptConnectorCode">
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="08669347-9efc-492a-930d-89f15130eb1a" created="Tue Apr 21 20:10:10 CEST 2026" createdBy="eddiehartman" main="test_ScriptConnectorCode" modified="Tue Apr 21 20:10:10 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+    <AssemblyLine name="test_ScriptConnectorCode">
         <ModTime>1776625371987</ModTime>
         <Settings>
             <parameter name="ALPoolSettingsDialog">showALPoolSettings</parameter>
