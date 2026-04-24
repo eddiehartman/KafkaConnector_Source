@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="1c13c314-9a83-4afb-9f1e-9c2c024ca822" created="Fri Apr 24 11:00:07 CEST 2026" createdBy="eddiehartman" main="KafkaConnector" modified="Fri Apr 24 11:00:07 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="c83fa381-6437-4a1a-b00e-002d7e77b006" created="Tue Apr 21 20:10:10 CEST 2026" createdBy="eddiehartman" main="KafkaConnector" modified="Tue Apr 21 20:10:10 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
     <Connector name="KafkaConnector">
         <InheritFrom>system:/Connectors/ibmdi.ScriptConnector</InheritFrom>
-        <ModTime>1776940728768</ModTime>
+        <ModTime>1776794875597</ModTime>
         <ConnectorMode>Iterator</ConnectorMode>
         <ConnectorState>Enabled</ConnectorState>
         <Configuration>
             <InheritFrom>[parent]</InheritFrom>
-            <parameter name="$form$"><![CDATA[<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="9" UUID="ae353aa2-d1d6-4714-9f48-9cdc6f357dd6" created="Tue Apr 21 11:19:03 CEST 2026" createdBy="eddiehartman" main="Form" modified="Wed Apr 22 16:21:05 CEST 2026" modifiedBy="eddiehartman" version="7.1.1">
+            <parameter name="$form$"><![CDATA[<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="7" UUID="ae353aa2-d1d6-4714-9f48-9cdc6f357dd6" created="Tue Apr 21 11:19:03 CEST 2026" createdBy="eddiehartman" main="Form" modified="Tue Apr 21 11:55:36 CEST 2026" modifiedBy="eddiehartman" version="7.1.1">
     <Form name="Form">
-        <ModTime>1776867664853</ModTime>
+        <ModTime>1776765336009</ModTime>
         <FormItemNames>
             <ListItem>$GLOBAL.script</ListItem>
             <ListItem>keepGlobalState</ListItem>
@@ -27,7 +27,6 @@
             <ListItem>acks</ListItem>
             <ListItem>key_attribute</ListItem>
             <ListItem>start_offset</ListItem>
-            <ListItem>partition</ListItem>
         </FormItemNames>
         <FormSectionNames>
             <ListItem>General</ListItem>
@@ -62,8 +61,8 @@
             <parameter name="syntax">string</parameter>
         </FormItem>
         <FormItem name="client_id">
-            <ModTime>1776867664853</ModTime>
-            <parameter name="description">Optional human-readable name for this connector's Kafka client. Written to log files.</parameter>
+            <ModTime>1776763898222</ModTime>
+            <parameter name="description">Human-readable name for this connector's Kafka client</parameter>
             <parameter name="label">Client ID</parameter>
         </FormItem>
         <FormItem name="connector_mode">
@@ -107,11 +106,6 @@
             <parameter name="description">Maximum messages returned per poll call</parameter>
             <parameter name="label">Max Poll Records</parameter>
         </FormItem>
-        <FormItem name="partition">
-            <ModTime>1776867596189</ModTime>
-            <parameter name="description">The partition to send the message to. Leave back for default (0)</parameter>
-            <parameter name="label">Partition</parameter>
-        </FormItem>
         <FormItem name="poll_timeout_ms">
             <ModTime>1776764076497</ModTime>
             <parameter name="description">How long to block waiting for messages per poll cycle</parameter>
@@ -131,11 +125,10 @@
         </FormItem>
         <FormSection name="Advanced">
             <FormSectionNames>
-                <ListItem>client_id</ListItem>
-                <ListItem>partition</ListItem>
                 <ListItem>start_offset</ListItem>
                 <ListItem>poll_timeout_ms</ListItem>
                 <ListItem>max_poll_records</ListItem>
+                <ListItem>client_id</ListItem>
                 <ListItem>$GLOBAL.userComment</ListItem>
                 <ListItem>$GLOBAL.script</ListItem>
             </FormSectionNames>
@@ -169,9 +162,6 @@
             <parameter name="poll_timeout_ms">2000</parameter>
             <parameter name="script"><![CDATA[// 20260418 1126 Initial
 // 20260419 1112 Added Claude code. Now to start reading
-// 20260421 2018 Iterator and AddOnly working
-// 20260423 1205 Iterator, Lookup and AddOnly working
-// 20260423 1600 Admin client operations: listTopics, listConsumerGroups, getOffsets, createTopic, deleteTopic
 
 // =============================================================================
 // KAFKA CONNECTOR — PARAMETER DEFINITIONS
@@ -185,27 +175,9 @@
 var kafkaConnectorParams = {
 
     connector_mode: {
-        title:       "Client Type",
+        title:       "Connector Mode",
         tooltip:     "Client (producer/consumer) or Admin (cluster operations)",
-        description: "Determines which Kafka clients are instantiated. 'client' initializes a full set — consumer, lookup consumer and producer. 'admin' creates only an AdminClient for cluster management: listing topics, listing consumer groups, inspecting offsets, creating and deleting topics."
-    },
-
-    admin_operation: {
-        title:       "Admin Operation",
-        tooltip:     "Which admin operation this connector instance performs",
-        description: "Only used when Client Type is 'admin'. Iterator-mode operations: 'listTopics' — one Entry per topic; 'listConsumerGroups' — one Entry per group; 'getOffsets' — one Entry per partition (requires Topic; include Consumer Group ID for lag). AddOnly-mode operations: 'createTopic' — creates the topic specified by Topic (or kafka.topic on conn); 'deleteTopic' — deletes it."
-    },
-
-    admin_partitions: {
-        title:       "Partitions",
-        tooltip:     "Number of partitions for createTopic",
-        description: "Used by createTopic when kafka.partitions is not present on conn. Defaults to 1."
-    },
-
-    admin_replication_factor: {
-        title:       "Replication Factor",
-        tooltip:     "Replication factor for createTopic",
-        description: "Used by createTopic when kafka.replication_factor is not present on conn. Defaults to 1."
+        description: "Determines the operational mode of the connector. 'client' mode initializes a full set of Kafka clients — consumer, lookup consumer and producer — all available for use via script. 'admin' mode uses the Kafka AdminClient API for cluster management operations such as creating or deleting topics, listing consumer groups, and inspecting offsets."
     },
 
     bootstrap_servers: {
@@ -281,10 +253,8 @@ var __consumer        = null;   // KafkaConsumer — forward iteration and commi
 var __lookupConsumer  = null;   // KafkaConsumer — seek/poll only, never commits
 var __producer        = null;   // KafkaProducer — all message production
 var __adminClient     = null;   // AdminClient   — cluster management operations
-var __msgBuffer       = null;   // ArrayList — current poll batch (client mode)
+var __msgBuffer       = null;   // ArrayList — current poll batch
 var __bufferIndex     = 0;      // Current position within __msgBuffer
-var __adminBuffer     = null;   // ArrayList — pre-built Entries for admin Iterator ops
-var __adminIndex      = 0;      // Current position within __adminBuffer
 var __mode            = null;   // 'client' or 'admin'
 
 var __cacheKeyConsumer       = 'kafka.consumer::'       + connector.getName();
@@ -311,8 +281,7 @@ function logmsg(lvl, msg) {
 	msg = msg || "";
 	lvl = lvl || "INFO";
 	
-	if (!(task instanceof com.ibm.di.server.AssemblyLine)) main.logmsg(lvl, msg)
-	else task.logmsg(lvl, msg)
+	task.logmsg(lvl, msg)
 }
 
 // Safe parameter retrieval with fallback default
@@ -381,7 +350,7 @@ function recordToEntry(rec) {
 function resolveKey() {
     var keyAttr = getParam('key_attribute', '');
     if (keyAttr === '') return null;
-    var keyVal = entry.getString(keyAttr);
+    var keyVal = conn.getString(keyAttr);
     return (keyVal != null && String(keyVal).trim() !== '') ? String(keyVal) : null;
 }
 
@@ -560,210 +529,14 @@ function terminate() {
 
 
 // =============================================================================
-// ADMIN HELPERS
-// Each adminSelect* function populates __adminBuffer with pre-built Entries.
-// selectEntries() dispatches to the right one; getNextEntry() drains the buffer.
-// Each adminExec* function performs a single write-style cluster operation,
-// called from putEntry() when connector_mode is 'admin'.
-// All AdminClient calls block via .get() — admin ops are infrequent enough
-// that async complexity adds no value here.
-// =============================================================================
-
-// listTopics — one Entry per topic, with partition count and replication factor.
-// Two round trips: listTopics() for names, then describeTopics() for detail.
-function adminSelectListTopics() {
-    var listings  = __adminClient.listTopics().listings().get();
-    var nameList  = new java.util.ArrayList();
-    for (var listing in listings) {
-        nameList.add(listing.name());
-    }
-
-    var descriptions = __adminClient.describeTopics(nameList).allTopicNames().get();
-    __adminBuffer    = new java.util.ArrayList();
-
-    for (var name in descriptions) {
-        var desc  = descriptions.get(name);
-        var parts = desc.partitions();
-        var e     = system.newEntry();
-        e['kafka.topic']              = String(desc.name());
-        e['kafka.internal']           = String(desc.isInternal());
-        e['kafka.partitions']         = String(parts.size());
-        e['kafka.replication_factor'] = parts.size() > 0 ? String(parts.get(0).replicas().size()) : '0';
-        __adminBuffer.add(e);
-    }
-
-    logmsg('INFO', 'listTopics: ' + __adminBuffer.size() + ' topic(s)');
-}
-
-
-// listConsumerGroups — one Entry per group.
-// Two round trips: listConsumerGroups() for IDs, describeConsumerGroups()
-// for state and member count which are not available on ConsumerGroupListing.
-function adminSelectListConsumerGroups() {
-    var groups = __adminClient.listConsumerGroups().all().get();
-    var idList = new java.util.ArrayList();
-    for (var grp in groups) {
-        idList.add(grp.groupId());
-    }
-
-    var descriptions = __adminClient.describeConsumerGroups(idList).all().get();
-    __adminBuffer    = new java.util.ArrayList();
-
-    for (var groupId in descriptions) {
-        var desc = descriptions.get(groupId);
-        var e    = system.newEntry();
-        e['kafka.group_id']     = String(desc.groupId());
-        e['kafka.state']        = String(desc.state());
-        e['kafka.member_count'] = String(desc.members().size());
-        e['kafka.coordinator']  = String(desc.coordinator().host()) + ':' + String(desc.coordinator().port());
-        __adminBuffer.add(e);
-    }
-
-    logmsg('INFO', 'listConsumerGroups: ' + __adminBuffer.size() + ' group(s)');
-}
-
-
-// getOffsets — one Entry per partition for the configured topic.
-// Fetches begin and end offsets in two listOffsets() calls.
-// If group_id is also set, fetches committed offsets and computes lag.
-function adminSelectGetOffsets() {
-    var topic   = requireParam('topic', 'getOffsets');
-    var groupId = getParam('group_id', '');
-
-    var nameList = new java.util.ArrayList();
-    nameList.add(topic);
-    var desc       = __adminClient.describeTopics(nameList).allTopicNames().get().get(topic);
-    var partitions = desc.partitions();
-
-    var OffsetSpec   = org.apache.kafka.clients.admin.OffsetSpec;
-    var beginRequest = new java.util.HashMap();
-    var endRequest   = new java.util.HashMap();
-
-    for (var i = 0; i < partitions.size(); i++) {
-        var tp = new org.apache.kafka.common.TopicPartition(topic, partitions.get(i).partition());
-        beginRequest.put(tp, OffsetSpec.earliest());
-        endRequest.put(tp,   OffsetSpec.latest());
-    }
-
-    var beginOffsets     = __adminClient.listOffsets(beginRequest).all().get();
-    var endOffsets       = __adminClient.listOffsets(endRequest).all().get();
-    var committedOffsets = null;
-
-    if (groupId !== '') {
-        committedOffsets = __adminClient.listConsumerGroupOffsets(groupId)
-            .partitionsToOffsetAndMetadata().get();
-    }
-
-    __adminBuffer = new java.util.ArrayList();
-
-    for (var i = 0; i < partitions.size(); i++) {
-        var partNum     = partitions.get(i).partition();
-        var tp          = new org.apache.kafka.common.TopicPartition(topic, partNum);
-        var beginOffset = beginOffsets.get(tp).offset();
-        var endOffset   = endOffsets.get(tp).offset();
-        var e           = system.newEntry();
-
-        e['kafka.topic']        = topic;
-        e['kafka.partition']    = String(partNum);
-        e['kafka.begin_offset'] = String(beginOffset);
-        e['kafka.end_offset']   = String(endOffset);
-
-        if (committedOffsets != null) {
-            var committed = committedOffsets.get(tp);
-            if (committed != null) {
-                var committedOffset         = committed.offset();
-                e['kafka.committed_offset'] = String(committedOffset);
-                e['kafka.lag']              = String(endOffset - committedOffset);
-            } else {
-                e['kafka.committed_offset'] = '';
-                e['kafka.lag']              = '';
-            }
-        }
-
-        __adminBuffer.add(e);
-    }
-
-    logmsg('INFO', 'getOffsets: ' + __adminBuffer.size() + ' partition(s) for topic ' + topic
-        + (groupId !== '' ? ' group=' + groupId : ''));
-}
-
-
-// createTopic — reads topic name, partition count and replication factor from
-// conn, falling back to connector parameters for the numeric defaults.
-// Logs a warning rather than throwing if the topic already exists —
-// idempotent behaviour is preferable in provisioning ALs.
-function adminExecCreateTopic() {
-    var topic      = conn.getString('kafka.topic')              || requireParam('topic', 'createTopic');
-    var partitions = conn.getString('kafka.partitions')         || getParam('admin_partitions',         '1');
-    var replFactor = conn.getString('kafka.replication_factor') || getParam('admin_replication_factor', '1');
-
-    var newTopic = new org.apache.kafka.clients.admin.NewTopic(
-        topic,
-        new java.lang.Integer(system.toInt(partitions)),
-        new java.lang.Short(system.toInt(replFactor))
-    );
-    var topicList = new java.util.ArrayList();
-    topicList.add(newTopic);
-
-    try {
-        __adminClient.createTopics(topicList).all().get();
-        logmsg('INFO', 'createTopic: created "' + topic + '" partitions=' + partitions + ' replication=' + replFactor);
-    } catch(ex) {
-        var msg = getErrorMsg(ex);
-        if (msg.indexOf('TopicExistsException') >= 0 || msg.indexOf('already exists') >= 0) {
-            logmsg('WARN', 'createTopic: topic "' + topic + '" already exists — skipping');
-        } else {
-            throw new java.lang.RuntimeException('createTopic failed for "' + topic + '": ' + msg);
-        }
-    }
-}
-
-
-// deleteTopic — reads topic name from conn, falling back to the topic parameter.
-// Logs a warning rather than throwing if the topic does not exist.
-function adminExecDeleteTopic() {
-    var topic     = conn.getString('kafka.topic') || requireParam('topic', 'deleteTopic');
-    var topicList = new java.util.ArrayList();
-    topicList.add(topic);
-
-    try {
-        __adminClient.deleteTopics(topicList).all().get();
-        logmsg('INFO', 'deleteTopic: deleted "' + topic + '"');
-    } catch(ex) {
-        var msg = getErrorMsg(ex);
-        if (msg.indexOf('UnknownTopicOrPartitionException') >= 0 || msg.indexOf('does not exist') >= 0) {
-            logmsg('WARN', 'deleteTopic: topic "' + topic + '" does not exist — skipping');
-        } else {
-            throw new java.lang.RuntimeException('deleteTopic failed for "' + topic + '": ' + msg);
-        }
-    }
-}
-
-
-// =============================================================================
 // SELECT ENTRIES
-// Client mode: sets up the consumer subscription or partition assignment.
-// Admin mode: dispatches to the appropriate adminSelect* function which
-// pre-builds all result Entries into __adminBuffer for getNextEntry() to drain.
+// When start_offset is set, uses assign() + seek() for direct cursor control.
+// assign() bypasses the group coordinator — no rebalances possible, no
+// listener needed. When blank, subscribe() lets Kafka resume from the last
+// committed offset automatically — also needs no listener.
 // =============================================================================
 
 function selectEntries() {
-
-    if (__mode === 'admin') {
-        var op = requireParam('admin_operation', 'selectEntries');
-        __adminBuffer = null;
-        __adminIndex  = 0;
-        if      (op === 'listTopics')          { adminSelectListTopics(); }
-        else if (op === 'listConsumerGroups')  { adminSelectListConsumerGroups(); }
-        else if (op === 'getOffsets')          { adminSelectGetOffsets(); }
-        else {
-            throw new java.lang.RuntimeException(
-                'selectEntries: admin_operation "' + op + '" is not an Iterator operation. '
-                + 'Use createTopic or deleteTopic with AddOnly mode.'
-            );
-        }
-        return;
-    }
 
     if (__consumer == null) {
         throw new java.lang.RuntimeException('selectEntries: consumer is null');
@@ -811,18 +584,13 @@ function selectEntries() {
 
 // =============================================================================
 // GET NEXT ENTRY
-// Admin mode: drains the pre-built __adminBuffer one Entry at a time.
-// Client mode: drains the poll buffer, fetching fresh batches as needed.
-// Returns null in both cases to signal end of iteration to the kernel.
+// Drains the local poll buffer one record at a time. Polls for a fresh batch
+// when the buffer is exhausted. Returns null to end the AL iteration cycle.
+// Commits after each record — at-least-once guarantee: a crash may cause
+// reprocessing but a message will never be silently lost.
 // =============================================================================
 
 function getNextEntry() {
-
-    if (__mode === 'admin') {
-        if (__adminBuffer == null || __adminIndex >= __adminBuffer.size()) return null;
-        entry.merge(__adminBuffer.get(__adminIndex++));
-        return;
-    }
 
     if (__consumer == null) {
         logmsg('ERROR', 'getNextEntry: consumer is null');
@@ -851,53 +619,66 @@ function getNextEntry() {
     catch(ex) { logmsg('WARN', 'commitSync failed: ' + getErrorMsg(ex)); }
 
 	var e = recordToEntry(record);
-    entry.merge(e);
+    entry.merge(e)
 }
 
 
 // =============================================================================
 // PUT ENTRY
-// Admin mode: dispatches to createTopic or deleteTopic based on admin_operation.
-// Client mode: produces a message to the topic. If kafka.value on conn is null,
-// produces a tombstone — allowing AL developers to signal a logical delete via
-// AddOnly mode when they do not have a stored partition/offset for Delete mode.
+// Produces a message to the topic. If kafka.value on conn is null, produces
+// a tombstone — allowing AL developers to signal a logical delete via AddOnly
+// mode when they do not have a stored partition/offset for Delete mode.
 // A tombstone without a key is rejected — the key identifies which record
 // the tombstone applies to in a compacted topic.
 // =============================================================================
 
 function putEntry() {
 
-    if (__mode === 'admin') {
-        var op = requireParam('admin_operation', 'putEntry');
-        if      (op === 'createTopic') { adminExecCreateTopic(); }
-        else if (op === 'deleteTopic') { adminExecDeleteTopic(); }
-        else {
-            throw new java.lang.RuntimeException(
-                'putEntry: admin_operation "' + op + '" is not a write operation. '
-                + 'Use listTopics, listConsumerGroups or getOffsets with Iterator mode.'
-            );
-        }
-        return;
+    if (__producer == null) {
+        throw new java.lang.RuntimeException('putEntry: producer is null');
     }
 
-	if (__producer == null) {
-		throw new java.lang.RuntimeException('putEntry: producer is null');
-	}
+    var topic     = requireParam('topic', 'putEntry');
+    var key       = resolveKey();
+    var rawValue  = conn.getString('kafka.value');
+    var value     = (rawValue != null) ? entry.toJSON() : null;
+    var operation = (value == null) ? 'delete' : 'add';
 
-	var topic     = entry.getString("topic") || requireParam('topic', 'putEntry');
-	var key       = resolveKey();
-	var rawValue  = entry.toJSON();
-	var value     = (rawValue != null) ? entry.toJSON() : null;
-	var operation = (value == null) ? 'delete' : 'add';
+    if (value == null && key == null) {
+        throw new java.lang.RuntimeException(
+            'putEntry: cannot produce a tombstone without a message key. '
+            + 'Set key_attribute to identify which record to tombstone.'
+        );
+    }
 
-	if (value == null && key == null) {
-		throw new java.lang.RuntimeException(
-			'putEntry: cannot produce a tombstone without a message key. '
-			+ 'Set key_attribute to identify which record to tombstone.'
-		);
-	}
+    produceRecord(topic, key, value, operation);
+}
 
-	produceRecord(topic, key, value, operation);
+function resolvePartition() {
+
+    var partitionStr = entry.getString('kafka.partition');
+
+    if (partitionStr != null && String(partitionStr).trim() !== '') {
+        return system.toInt(partitionStr);
+    }
+
+    var assigned = __lookupConsumer.assignment().toArray();
+
+    if (assigned.length === 1) {
+        logmsg('WARN',
+            'kafka.partition not in Link Criteria — falling back to partition '
+            + assigned[0].partition()
+            + '. Store kafka.partition from getNextEntry() to avoid this.');
+        return assigned[0].partition();
+    }
+
+    throw new java.lang.RuntimeException(
+        'findEntry: kafka.partition not supplied and '
+        + (assigned.length === 0
+            ? 'no partitions are currently assigned.'
+            : assigned.length + ' partitions are held — offset is ambiguous.')
+        + ' Supply kafka.partition in Link Criteria.'
+    );
 }
 
 // =============================================================================
@@ -915,132 +696,62 @@ function putEntry() {
 // =============================================================================
 
 function findEntry() {
-	if (__lookupConsumer == null) {
-		logmsg('ERROR', 'findEntry: lookup consumer is null');
-		result.setStatus(0);
-		return;
-	}
 
-	try {
-		var lc           = getLinkCrit();
-		var topic        = lc.topic || getParam('topic', '');
-		var partitionNum = resolvePartition(lc, topic);
-		var pollMs       = java.lang.Long(system.toInt(getParam('poll_timeout_ms', '2000')));
-		var tp           = new org.apache.kafka.common.TopicPartition(topic, partitionNum);
-		var tpList       = new java.util.ArrayList();
-		tpList.add(tp);
-		__lookupConsumer.assign(tpList);
+    if (__lookupConsumer == null) {
+        logmsg('ERROR', 'findEntry: lookup consumer is null');
+        result.setStatus(0);
+        return;
+    }
 
-		var found = false;
+    var offsetStr = conn.getString('kafka.offset');
+    if (offsetStr == null || String(offsetStr).trim() === '') {
+        logmsg('ERROR', 'findEntry: kafka.offset must be supplied in Link Criteria');
+        result.setStatus(0);
+        return;
+    }
 
-		// --- Offset-based seek (fast, exact) ---
-		if (lc.offset != null && lc.offset.trim() !== '') {
-			var targetOffset = java.lang.Long(system.toInt(lc.offset));
-			__lookupConsumer.seek(tp, targetOffset);
-			logmsg('INFO', 'findEntry: seeking partition=' + partitionNum + ' offset=' + targetOffset);
+    try {
+        var topic        = requireParam('topic', 'findEntry');
+        var partitionNum = resolvePartition();
+        var targetOffset = system.toInt(offsetStr);
+        var tp           = new org.apache.kafka.common.TopicPartition(topic, partitionNum);
+        var tpList       = new java.util.ArrayList();
+        tpList.add(tp);
 
-			var records = __lookupConsumer.poll(java.time.Duration.ofMillis(pollMs)).records(tp);
-			for (var i = 0; i < records.size(); i++) {
-				var rec = records.get(i);
-				if (rec.offset() == targetOffset) {
-					found = true;
-					logmsg('INFO', 'findEntry: found at partition=' + partitionNum + ' offset=' + targetOffset);
-					lastRec = rec;
-					break;
-				}
-				logmsg('WARN', 'findEntry: offset ' + targetOffset
-					+ ' not matched — may have been trimmed by retention policy');
-			}
+        __lookupConsumer.assign(tpList);
+        __lookupConsumer.seek(tp, targetOffset);
 
-		// --- Key-based scan (slower — scans partition from beginning) ---
-		} else {
-			// Accept 'key' directly, or the user's own attribute name if it matches key_attribute param
-			// e.g. employeeId: emp001 works if key_attribute = employeeId
-			var keyAttrName = getParam('key_attribute', '');
-			var targetKey   = lc['key'](keyAttrName !== '' ? lc[keyAttrName] : null) || lc['key'];
+        logmsg('INFO', 'findEntry: seeking partition ' + partitionNum
+            + ' offset ' + targetOffset);
 
-			if (targetKey == null || targetKey.trim() === '') {
-				logmsg('ERROR', 'findEntry: supply offset or key (or ' + (keyAttrName || 'key_attribute') + ') in Link Criteria');
-				result.setStatus(0);
-				return;
-			}
+        var records = __lookupConsumer.poll(
+            java.time.Duration.ofMillis(system.toInt(getParam('poll_timeout_ms', '2000')))
+        );
 
-			logmsg('INFO', 'findEntry: scanning partition=' + partitionNum + ' for key=' + targetKey);
-			__lookupConsumer.seekToBeginning(tpList);
+        var found = false;
 
-			// Scan to end — keep last match (latest message wins on non-compacted topics)
-			var lastRec   = null;
-			var exhausted = false;
-			while (!exhausted) {
-				var batch = __lookupConsumer.poll(java.time.Duration.ofMillis(pollMs)).records(tp);
-				if (batch.size() === 0) {
-					exhausted = true;
-					break;
-				}
-				for (var i = 0; i < batch.size(); i++) {
-					var rec = batch.get(i);
-					if (rec.key() != null && ('' + rec.key()) === targetKey) {
-						lastRec = rec;
-					}
-				}
-			}
+        for (var rec in records) {
+            if (rec.partition() == partitionNum && rec.offset() == targetOffset) {
+                connector.addFindEntry(recordToEntry(rec));
+                found = true;
+                logmsg('INFO', 'findEntry: found at partition '
+                    + partitionNum + ' offset ' + targetOffset);
+                break;
+            }
+            logmsg('WARN', 'findEntry: got partition ' + rec.partition()
+                + ' offset ' + rec.offset()
+                + ' — target offset ' + targetOffset
+                + ' may have been removed by retention policy');
+        }
 
-		}
+        result.setStatus(found ? 1 : 0);
 
-		if (lastRec != null) {
-			var readEntry = recordToEntry(lastRec);
-			connector.addFindEntry(readEntry);
-			entry.merge(readEntry);
-			found = true;
-			logmsg('INFO', 'findEntry: found key=' + targetKey + ' at offset=' + lastRec.offset());
-		} else {
-			logmsg('WARN', 'findEntry: key=' + targetKey + ' not found in partition=' + partitionNum);
-		}
-
-		result.setStatus(found ? 1 : 0);
-
-	} catch(ex) {
-		logmsg('ERROR', 'findEntry failed: ' + getErrorMsg(ex));
-		result.setStatus(0);
-	}
+    } catch(ex) {
+        logmsg('ERROR', 'findEntry failed: ' + getErrorMsg(ex));
+        result.setStatus(0);
+    }
 }
 
-// Normalize link criteria keys — strip kafka. or kafka_ prefix
-// so users can write offset, key, partition OR kafka.offset etc.
-function getLinkCrit() {
-	var lc       = {};
-	var criteria = search.getCriteria();
-	for (var crit in criteria) {
-		var name = '' + crit.name;
-		if (name.indexOf('kafka.') === 0)      name = name.substring(6);
-		else if (name.indexOf('kafka_') === 0)  name = name.substring(6);
-		lc[name] = '' + crit.value;
-	}
-	return lc;
-}
-
-function resolvePartition(lc, topic) {
-	// 1. Link Criteria
-	if (lc.partition != null && lc.partition.trim() !== '') {
-		return system.toInt(lc.partition);
-	}
-	// 2. Connector param
-	var paramVal = getParam('partition', '');
-	if (paramVal !== '') {
-		return system.toInt(paramVal);
-	}
-	// 3. Single-partition topic fallback — ask the broker
-	var partitions = __lookupConsumer.partitionsFor(topic);
-	if (partitions.size() === 1) {
-		logmsg('WARN', 'partition not supplied — topic has only one partition, defaulting to 0');
-		return 0;
-	}
-	throw new java.lang.RuntimeException(
-		'findEntry: partition not supplied. '
-		+ 'Topic "' + topic + '" has ' + partitions.size() + ' partitions — cannot determine which to scan. '
-		+ 'Supply partition in Link Criteria or set the partition connector parameter.'
-	);
-}
 
 // =============================================================================
 // DELETE ENTRY
@@ -1063,7 +774,7 @@ function deleteEntry() {
 
     if (key == null) {
         throw new java.lang.RuntimeException(
-            'deleteEntry: key_attribute must be set and have a value mapped to it. '
+            'deleteEntry: key_attribute must be set and have a value on conn. '
             + 'A tombstone without a key cannot identify which record to delete.'
         );
     }
@@ -1073,7 +784,7 @@ function deleteEntry() {
 
 
 // =============================================================================
-// MOD ENTRY / QUERY REPLY / LOOKUP — NOT SUPPORTED
+// MOD ENTRY / QUERY REPLY — NOT SUPPORTED
 // Included as explicit stubs so unsupported calls surface a clear error
 // rather than a silent no-op or a confusing "function not defined" failure.
 // =============================================================================
