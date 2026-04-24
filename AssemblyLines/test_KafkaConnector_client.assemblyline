@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="ea35c26e-38e4-456e-bb5b-099d1c93018b" created="Thu Apr 23 12:20:38 CEST 2026" createdBy="eddiehartman" main="test_KafkaConnector" modified="Thu Apr 23 12:20:38 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
-    <AssemblyLine name="test_KafkaConnector">
-        <ModTime>1776870177284</ModTime>
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="38" UUID="663db124-39ce-4c93-839a-43b4385e6aa2" created="Tue Apr 21 13:10:36 CEST 2026" createdBy="eddiehartman" main="test_KafkaConnector_client" modified="Thu Apr 23 12:42:53 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+    <AssemblyLine name="test_KafkaConnector_client">
+        <ModTime>1776940972152</ModTime>
         <Settings/>
         <Hooks/>
         <CheckpointConfig/>
@@ -9,6 +9,7 @@
             <SimulationStates>
                 <Component name="reusableConnector" state="Simulated"/>
                 <Component name="Add message" state="Simulated"/>
+                <Component name="Add another message" state="Simulated"/>
                 <Component name="Find message" state="Enabled"/>
                 <Component name="message" state="Enabled"/>
                 <Component name="DumpWorkEntry" state="Enabled"/>
@@ -16,8 +17,11 @@
             <ProxySettings/>
         </SimulationConfig>
         <LogConfig/>
-        <ContainerEF name="EntryFeedContainer"/>
+        <ContainerEF name="EntryFeedContainer">
+            <ModTime>1776769898225</ModTime>
+        </ContainerEF>
         <ContainerDF name="DataFlowContainer">
+            <ModTime>1776940972152</ModTime>
             <Connector name="reusableConnector">
                 <InheritFrom>/Connectors/KafkaConnector</InheritFrom>
                 <ModTime>1776795488402</ModTime>
@@ -31,6 +35,7 @@
                 </Parser>
                 <AttributeMap name="Input">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776769898225</ModTime>
                     <AttributeMapItem>
                         <Name>*</Name>
                         <Type>simple</Type>
@@ -41,12 +46,14 @@
                     <InheritFrom>[parent]</InheritFrom>
                 </AttributeMap>
                 <DeltaSettings>
+                    <ModTime>1776769889222</ModTime>
                     <WhenToCommit>After every database operation</WhenToCommit>
                     <RowLocking>SERIALIZABLE</RowLocking>
                     <ChangeDetectionMode>DETECT_ALL</ChangeDetectionMode>
                 </DeltaSettings>
                 <Schema name="Input">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776795488402</ModTime>
                     <SchemaItem>
                         <Name>action</Name>
                         <Syntax>java.lang.String</Syntax>
@@ -90,6 +97,7 @@
                 </Schema>
                 <Schema name="Output">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776795488402</ModTime>
                     <SchemaItem>
                         <Name>action</Name>
                         <Syntax>java.lang.String</Syntax>
@@ -151,9 +159,90 @@
             </Connector>
             <Connector name="Add message">
                 <InheritFrom>@reusableConnector</InheritFrom>
-                <ModTime>1776870173393</ModTime>
+                <ModTime>1776940972152</ModTime>
                 <ConnectorMode>AddOnly</ConnectorMode>
-                <ConnectorState>Disabled</ConnectorState>
+                <ConnectorState>Enabled</ConnectorState>
+                <Configuration>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225808</ModTime>
+                    <parameter name="connectorType">@reusableConnector</parameter>
+                </Configuration>
+                <Parser>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </Parser>
+                <AttributeMap name="Input">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </AttributeMap>
+                <AttributeMap name="Output">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776940972152</ModTime>
+                    <AttributeMapItem>
+                        <Name>action</Name>
+                        <Type>advanced</Type>
+                        <Script>"worship"</Script>
+                        <Simple>action</Simple>
+                    </AttributeMapItem>
+                    <AttributeMapItem>
+                        <Name>dept</Name>
+                        <Type>advanced</Type>
+                        <Script>"DevOps"</Script>
+                        <Simple>dept</Simple>
+                    </AttributeMapItem>
+                    <AttributeMapItem>
+                        <Name>employeeId</Name>
+                        <Type>advanced</Type>
+                        <Script>"TDI007"</Script>
+                        <Simple>employee_Id</Simple>
+                    </AttributeMapItem>
+                    <AttributeMapItem>
+                        <Name>name</Name>
+                        <Type>advanced</Type>
+                        <Script>"Lord TDI"</Script>
+                        <Simple>name</Simple>
+                    </AttributeMapItem>
+                </AttributeMap>
+                <DeltaSettings/>
+                <Schema name="Input">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225802</ModTime>
+                </Schema>
+                <Schema name="Output">
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </Schema>
+                <LinkCriteria>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776776225804</ModTime>
+                </LinkCriteria>
+                <Hooks>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776795086000</ModTime>
+                    <Hook name="after_add">
+                        <InheritFrom>[no inheritance]</InheritFrom>
+                        <Name>after_add</Name>
+                        <Script>task.logmsg(thisConnector.getName() + " - added: " + conn)</Script>
+                        <Enabled>true</Enabled>
+                    </Hook>
+                </Hooks>
+                <CheckpointConfig/>
+                <SandboxConfig/>
+                <Reconnect>
+                    <InheritFrom>[parent]</InheritFrom>
+                    <ReconnectRules/>
+                </Reconnect>
+                <Operations/>
+                <PoolDefinition>
+                    <InheritFrom>[parent]</InheritFrom>
+                </PoolDefinition>
+                <PoolInstance/>
+            </Connector>
+            <Connector name="Add another message">
+                <InheritFrom>@reusableConnector</InheritFrom>
+                <ModTime>1776940941229</ModTime>
+                <ConnectorMode>AddOnly</ConnectorMode>
+                <ConnectorState>Enabled</ConnectorState>
                 <Configuration>
                     <InheritFrom>[parent]</InheritFrom>
                     <parameter name="connectorType">@reusableConnector</parameter>
@@ -230,21 +319,31 @@
             </Connector>
             <Connector name="Find message">
                 <InheritFrom>@reusableConnector</InheritFrom>
-                <ModTime>1776869968298</ModTime>
+                <ModTime>1776940619045</ModTime>
                 <ConnectorMode>Lookup</ConnectorMode>
                 <ConnectorState>Enabled</ConnectorState>
                 <Configuration>
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776797412832</ModTime>
                     <parameter name="connectorType">@reusableConnector</parameter>
                 </Configuration>
                 <Parser>
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776797412825</ModTime>
                 </Parser>
                 <AttributeMap name="Input">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776940619045</ModTime>
+                    <AttributeMapItem>
+                        <Name>employeeId</Name>
+                        <Type>advanced</Type>
+                        <Script>conn.getString("employeeId")</Script>
+                        <Simple>employeeId</Simple>
+                    </AttributeMapItem>
                 </AttributeMap>
                 <AttributeMap name="Output">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776797425412</ModTime>
                     <AttributeMapItem>
                         <Name>*</Name>
                         <Type>simple</Type>
@@ -254,12 +353,15 @@
                 <DeltaSettings/>
                 <Schema name="Input">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776797412825</ModTime>
                 </Schema>
                 <Schema name="Output">
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776797412825</ModTime>
                 </Schema>
                 <LinkCriteria>
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776869968298</ModTime>
                     <LinkCriteriaItem>
                         <Key>19db161bdab</Key>
                         <Attribute>offset</Attribute>
@@ -275,6 +377,7 @@
                 </LinkCriteria>
                 <Hooks>
                     <InheritFrom>[parent]</InheritFrom>
+                    <ModTime>1776940015716</ModTime>
                     <Hook name="after_lookup">
                         <InheritFrom>[no inheritance]</InheritFrom>
                         <Name>after_lookup</Name>
@@ -287,6 +390,13 @@
                     </Hook>
                     <Hook name="before_lookup">
                         <Name>before_lookup</Name>
+                        <Enabled>true</Enabled>
+                    </Hook>
+                    <Hook name="lookup_multiple">
+                        <InheritFrom>[no inheritance]</InheritFrom>
+                        <ModTime>1776940015716</ModTime>
+                        <Name>lookup_multiple</Name>
+                        <Script>i = 42</Script>
                         <Enabled>true</Enabled>
                     </Hook>
                 </Hooks>
@@ -303,7 +413,7 @@
                 <PoolInstance/>
             </Connector>
             <Loop name="message">
-                <ModTime>1776870177284</ModTime>
+                <ModTime>1776940926262</ModTime>
                 <LoopType>1</LoopType>
                 <Connector name="message">
                     <InheritFrom>@reusableConnector</InheritFrom>
@@ -312,6 +422,7 @@
                     <ConnectorState>Passive</ConnectorState>
                     <Configuration>
                         <InheritFrom>[parent]</InheritFrom>
+                        <ModTime>1776775970322</ModTime>
                         <parameter name="connectorType">@reusableConnector</parameter>
                         <parameter name="parserOption">Useless</parameter>
                     </Configuration>
@@ -323,6 +434,7 @@
                     </AttributeMap>
                     <AttributeMap name="Output"/>
                     <DeltaSettings>
+                        <ModTime>1776775970715</ModTime>
                         <UniqueAttribute/>
                         <WhenToCommit>After every database operation</WhenToCommit>
                         <RowLocking>SERIALIZABLE</RowLocking>
@@ -334,6 +446,7 @@
                     <Schema name="Output">
                         <UserComment>{extsyntax=TEXTAREA, name=userComment}</UserComment>
                         <InheritFrom>[no inheritance]</InheritFrom>
+                        <ModTime>1776775965557</ModTime>
                         <SchemaItem>
                             <Name>debug</Name>
                             <NativeSyntax>boolean</NativeSyntax>
@@ -361,6 +474,7 @@
                     <LinkCriteria/>
                     <Hooks>
                         <InheritFrom>[parent]</InheritFrom>
+                        <ModTime>1776776140790</ModTime>
                         <Hook name="before_getnext">
                             <InheritFrom>[no inheritance]</InheritFrom>
                             <Name>before_getnext</Name>
@@ -381,7 +495,7 @@
                     <PoolInstance/>
                 </Connector>
                 <Branch name="message">
-                    <ModTime>1776870177284</ModTime>
+                    <ModTime>1776940926262</ModTime>
                     <Script name="DumpWorkEntry">
                         <ModTime>1776775827447</ModTime>
                         <parameter name="script"><![CDATA[// Dump the work entry
@@ -390,7 +504,7 @@ else task.dumpEntry(work);]]></parameter>
                     </Script>
                     <Conditions/>
                     <MatchAny>false</MatchAny>
-                    <Enabled>false</Enabled>
+                    <Enabled>true</Enabled>
                     <Type>0</Type>
                 </Branch>
             </Loop>

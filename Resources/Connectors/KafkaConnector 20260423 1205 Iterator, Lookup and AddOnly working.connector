@@ -1,296 +1,176 @@
-<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="08669347-9efc-492a-930d-89f15130eb1a" created="Tue Apr 21 20:10:10 CEST 2026" createdBy="eddiehartman" main="test_ScriptConnectorCode" modified="Tue Apr 21 20:10:10 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
-    <AssemblyLine name="test_ScriptConnectorCode">
-        <ModTime>1776625371987</ModTime>
-        <Settings>
-            <parameter name="ALPoolSettingsDialog">showALPoolSettings</parameter>
-            <parameter name="automapattributes">false</parameter>
-            <parameter name="createTombstones">false</parameter>
-            <parameter name="includeGlobalPrologs">true</parameter>
-            <parameter name="includePrologs"><![CDATA[
-]]></parameter>
-            <parameter name="nullBehaviorDialog">showNullBehavior</parameter>
-        </Settings>
-        <Hooks/>
-        <CheckpointConfig/>
-        <SandboxConfig/>
-        <SimulationConfig>
-            <SimulationStates>
-                <Component name="What kind of test is this?" state="Enabled"/>
-                <Component name="Kafka params" state="Enabled"/>
-                <Component name="SpoofLib" state="Enabled"/>
-                <Component name="Testing Form Init Script" state="Enabled"/>
-                <Component name="Form Init Script" state="Enabled"/>
-                <Component name="Test Form Init Script" state="Enabled"/>
-                <Component name="Testing Form Event Script" state="Enabled"/>
-                <Component name="Form Event Script" state="Enabled"/>
-                <Component name="Test Form Event Script" state="Enabled"/>
-                <Component name="Testing Connector Script" state="Enabled"/>
-                <Component name="Connector Script" state="Enabled"/>
-                <Component name="Pre_Test for Claude" state="Enabled"/>
-                <Component name="Test Connector functions" state="Enabled"/>
-            </SimulationStates>
-            <ProxySettings/>
-        </SimulationConfig>
-        <LogConfig/>
-        <ContainerEF name="EntryFeedContainer"/>
-        <ContainerDF name="DataFlowContainer">
-            <Script name="What kind of test is this?">
-                <ModTime>1776610073834</ModTime>
-                <parameter name="script">whatToTest = "connector"; // connector, init or event, last two Form scripts</parameter>
-            </Script>
-            <Script name="Kafka params">
-                <ModTime>1776625158160</ModTime>
-                <parameter name="script"><![CDATA[// =============================================================================
-// KAFKA CONNECTOR — TEST CONFIGURATION
-// Swap this script between test scenarios.
-// =============================================================================
-
-var testParams = {
-    connector_mode:    'client',
-    bootstrap_servers: '192.168.68.64:9092',
-    topic:             'TDI-topic',
-    group_id:          'tdi-consumer-test',
-    client_id:         'tdi-kafka-test',
-    auto_offset_reset: 'latest',
-    poll_timeout_ms:   '2000',
-    max_poll_records:  '100',
-    acks:              '1',
-    key_attribute:     'employeeId',
-    start_offset:      '0'
-};]]></parameter>
-            </Script>
-            <Script name="SpoofLib">
-                <ModTime>1776604964178</ModTime>
-                <parameter name="script"><![CDATA[// =============================================================================
-// SPOOFLIB — Test harness for TDI Kafka Connector script
-// Must be loaded after the test configuration script (testParams).
-// Stubs only the objects that are NOT real in an AL script context:
-//   connector, form, result, config, parent, alert()
-// task, system, work, conn, main are real TDI objects — not stubbed.
-// =============================================================================
-// CHANGELOG:
-// 20250419 - Initial version for Kafka connector
-//          - Labels, tooltips and values carried in testParams — not in spooflib
-// =============================================================================
-
-
-// =============================================================================
-// NAME RESOLUTION
-// Lowercases the requested name and verifies it exists in testParams.
-// Kafka params have no legacy aliases — direct lookup is sufficient.
-// Returns null if unrecognised so getControl() can return a sentinel control.
-// =============================================================================
-
-function __spoof_resolveParam(pname) {
-    var lower = String(pname).toLowerCase();
-    return (typeof testParams[lower] !== 'undefined') ? lower : null;
-}
-
-
-// =============================================================================
-// CONTROL FACTORY
-// Simulates a TDI Configuration Editor form field.
-// Reads label, tooltip and value from the testParams parameter object.
-// getText() is what form and connector scripts call to read a value.
-// Mutating calls (setText, select) log and update local state so subsequent
-// getText() calls reflect any changes made by the script under test.
-// =============================================================================
-
-function __spoof_control(paramName, val) {
-
-    this.paramName = paramName;
-    this.val       = (val !== undefined && val !== null) ? val : '';
-
-    this.formatLog = function(msg) {
-        return '[' + this.paramName + '] ' + msg;
-    };
-
-    this.getText = function() {
-        return (typeof this.val === 'boolean') ? String(this.val) : this.val;
-    };
-
-    this.setText = function(newVal) {
-        main.logmsg(this.formatLog('setText: ' + newVal));
-        this.val = newVal;
-    };
-
-    this.getSelection = function() {
-        return (typeof this.val === 'boolean') ? this.val : false;
-    };
-
-    this.setVisible = function(visible) {
-        main.logmsg(this.formatLog(visible ? 'VISIBLE' : 'hidden'));
-    };
-
-    this.setEnabled = function(enabled) {
-        main.logmsg(this.formatLog(enabled ? 'ENABLED' : 'disabled'));
-    };
-
-    this.removeAll       = function()      { main.logmsg(this.formatLog('removeAll')); };
-    this.add             = function(item)  { main.logmsg(this.formatLog('add: ' + item)); };
-    this.select          = function(index) { main.logmsg(this.formatLog('select: ' + index)); this.val = index; };
-    this.getSelectedItem = function()      { return this.val; };
-    this.getItemCount    = function()      { return 0; };
-
-    return this;
-}
-
-
-// =============================================================================
-// FORM OBJECT
-// Simulates the form object available in TDI Form Init and Event scripts.
-// getControl() resolves names via __spoof_resolveParam and passes the full
-// parameter object to __spoof_control so label, tooltip and value are all
-// available. Unknown names return a sentinel control and log a warning.
-// =============================================================================
-
-form = {
-
-	getControl: function(pname) {
-	    var canonical = __spoof_resolveParam(pname);
-	    if (canonical === null) {
-	        main.logmsg('SPOOFLIB WARNING: unknown parameter "' + pname + '"');
-	        return __spoof_control(String(pname), '*Invalid param: ' + pname + '*');
-	    }
-	    return __spoof_control(canonical, testParams[canonical]);
-	},
-    alert:           function(msg) { main.logmsg('FORM ALERT: ' + msg); },
-    setWaitCursor:   function()    { main.logmsg('!! WAIT CURSOR !!'); },
-    setNormalCursor: function()    { main.logmsg('.. Normal cursor ..'); }
-};
-
-
-// =============================================================================
-// CONNECTOR OBJECT
-// Simulates the Script Connector interface available in both Connector scripts
-// and Form scripts. getParam() delegates to form.getControl() so both surfaces
-// read from testParams via the same resolution path.
-// addFindEntry() logs the entry so findEntry() results are visible in test output.
-// =============================================================================
-
-connector = {
-
-    getParam: function(pname) {
-        return form.getControl(pname).getText();
-    },
-
-    getName: function() {
-        return 'KafkaConnector-Test';
-    },
-
-    addFindEntry: function(e) {
-        main.logmsg('addFindEntry: ' + e);
-    }
-};
-
-
-// =============================================================================
-// CONFIG / PARENT STUBS
-// config.getMode() is the correct TDI call for reading the connector operating
-// mode from within a Connector script. __tdyModeOverride is set in the test
-// AL script before calling initialize(), allowing the mode to be controlled
-// per test run without touching testParams or spooflib.
-// Falls back to 'Iterator' if __tdyModeOverride is not defined.
-// =============================================================================
-
-config = {
-
-    getParent: function() { return parent; },
-
-    getMode: function() {
-        return (typeof __tdyModeOverride !== 'undefined')
-            ? __tdyModeOverride
-            : 'Iterator';
-    }
-};
-
-parent = {
-    getMode: function() { return config.getMode(); }
-};
-
-
-// =============================================================================
-// RESULT OBJECT
-// Simulates the result object available in findEntry().
-// Logs status changes with human-readable labels.
-// =============================================================================
-
-result = {
-    _status: 0,
-
-    setStatus: function(s) {
-        var labels = ['not found', 'found', 'multiple found'];
-        this._status = s;
-        main.logmsg('result.setStatus: ' + s + ' (' + (labels[s] || 'unknown') + ')');
-    },
-
-    getStatus: function() {
-        return this._status;
-    }
-};
-
-
-// =============================================================================
-// MISCELLANEOUS
-// =============================================================================
-
-function alert(msg) { main.logmsg('ALERT: ' + msg); }
-
-// Default value. Must be set in test script to initialize correctly
-__tdyModeOverride = "Iterator";]]></parameter>
-            </Script>
-            <Branch name="Testing Form Init Script">
-                <ModTime>1776605433816</ModTime>
-                <Script name="Form Init Script">
-                    <ModTime>1776504364697</ModTime>
-                    <parameter name="script">// 20260418 1126 Initial</parameter>
-                </Script>
-                <Script name="Test Form Init Script">
-                    <ModTime>1776605433816</ModTime>
-                    <parameter name="enabled">true</parameter>
-                    <parameter name="script"><![CDATA[//initialize();
-//fetchSchema(); // Done in initialize()
-//fetchParameters();
-//fetchActions()
-//fetchServers();
-
-//setAuthMethod();
-
-fetchEndpoints();
-
-
-i = 42;]]></parameter>
-                </Script>
-                <ScriptCondition>return whatToTest === "init"</ScriptCondition>
-                <Conditions/>
-                <MatchAny>false</MatchAny>
-                <Enabled>true</Enabled>
-                <Type>0</Type>
-            </Branch>
-            <Branch name="Testing Form Event Script">
-                <ModTime>1776605480563</ModTime>
-                <Script name="Form Event Script">
-                    <ModTime>1776605457087</ModTime>
-                    <parameter name="script"/>
-                </Script>
-                <Script name="Test Form Event Script">
-                    <ModTime>1776605451390</ModTime>
-                    <parameter name="enabled">true</parameter>
-                    <parameter name="script"/>
-                </Script>
-                <ScriptCondition>return whatToTest === "event"</ScriptCondition>
-                <Conditions/>
-                <MatchAny>true</MatchAny>
-                <Enabled>true</Enabled>
-                <Type>1</Type>
-            </Branch>
-            <Branch name="Testing Connector Script">
-                <ModTime>1776625371987</ModTime>
-                <Script name="Connector Script">
-                    <ModTime>1776625371987</ModTime>
-                    <parameter name="enabled">true</parameter>
-                    <parameter name="script"><![CDATA[// 20260418 1126 Initial
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="63" UUID="7d572101-3ad3-49fa-b5ab-7915236ed3f9" created="Tue Apr 21 11:18:39 CEST 2026" createdBy="eddiehartman" main="KafkaConnector" modified="Wed Apr 22 17:19:20 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+    <Connector name="KafkaConnector">
+        <InheritFrom>system:/Connectors/ibmdi.ScriptConnector</InheritFrom>
+        <ModTime>1776871159539</ModTime>
+        <ConnectorMode>Iterator</ConnectorMode>
+        <ConnectorState>Enabled</ConnectorState>
+        <Configuration>
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776871159539</ModTime>
+            <parameter name="$form$"><![CDATA[<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="9" UUID="ae353aa2-d1d6-4714-9f48-9cdc6f357dd6" created="Tue Apr 21 11:19:03 CEST 2026" createdBy="eddiehartman" main="Form" modified="Wed Apr 22 16:21:05 CEST 2026" modifiedBy="eddiehartman" version="7.1.1">
+    <Form name="Form">
+        <ModTime>1776867664853</ModTime>
+        <FormItemNames>
+            <ListItem>$GLOBAL.script</ListItem>
+            <ListItem>keepGlobalState</ListItem>
+            <ListItem>$GLOBAL.includeFiles</ListItem>
+            <ListItem>includePrologs</ListItem>
+            <ListItem>$GLOBAL.debug</ListItem>
+            <ListItem>$GLOBAL.help</ListItem>
+            <ListItem>connector_mode</ListItem>
+            <ListItem>bootstrap_servers</ListItem>
+            <ListItem>topic</ListItem>
+            <ListItem>group_id</ListItem>
+            <ListItem>client_id</ListItem>
+            <ListItem>auto_offset_reset</ListItem>
+            <ListItem>poll_timeout_ms</ListItem>
+            <ListItem>max_poll_records</ListItem>
+            <ListItem>acks</ListItem>
+            <ListItem>key_attribute</ListItem>
+            <ListItem>start_offset</ListItem>
+            <ListItem>partition</ListItem>
+        </FormItemNames>
+        <FormSectionNames>
+            <ListItem>General</ListItem>
+            <ListItem>Advanced</ListItem>
+        </FormSectionNames>
+        <FormItem name="acks">
+            <ModTime>1776764682579</ModTime>
+            <Values>
+                <ListItem>0</ListItem>
+                <ListItem>1</ListItem>
+                <ListItem>all</ListItem>
+            </Values>
+            <parameter name="description">Durability guarantee for produced messages. 0:fire and forget, 1:leader broker only, all:full in-sync replica set</parameter>
+            <parameter name="label">Producer Acknowledgement</parameter>
+            <parameter name="syntax">droplist</parameter>
+        </FormItem>
+        <FormItem name="auto_offset_reset">
+            <ModTime>1776764682579</ModTime>
+            <Values>
+                <ListItem>earliest</ListItem>
+                <ListItem>latest</ListItem>
+            </Values>
+            <parameter name="description">Where to start consuming when no committed offset exists and Start Offset is blank</parameter>
+            <parameter name="label">Auto Offset Reset</parameter>
+            <parameter name="syntax">droplist</parameter>
+        </FormItem>
+        <FormItem name="bootstrap_servers">
+            <ModTime>1776765336009</ModTime>
+            <parameter name="Required">true</parameter>
+            <parameter name="description">Kafka broker address(es), e.g. host:port, host:port, ...</parameter>
+            <parameter name="label">Bootstrap Servers</parameter>
+            <parameter name="syntax">string</parameter>
+        </FormItem>
+        <FormItem name="client_id">
+            <ModTime>1776867664853</ModTime>
+            <parameter name="description">Optional human-readable name for this connector's Kafka client. Written to log files.</parameter>
+            <parameter name="label">Client ID</parameter>
+        </FormItem>
+        <FormItem name="connector_mode">
+            <ModTime>1776764682556</ModTime>
+            <Values>
+                <ListItem>client</ListItem>
+                <ListItem>admin</ListItem>
+            </Values>
+            <parameter name="Required">true</parameter>
+            <parameter name="description">Either Client (producer/consumer) or Admin (cluster operations)</parameter>
+            <parameter name="label">Connector Mode</parameter>
+            <parameter name="syntax">droplist</parameter>
+        </FormItem>
+        <FormItem name="group_id">
+            <ModTime>1776764569502</ModTime>
+            <parameter name="Required">true</parameter>
+            <parameter name="description">Identifies this consumer within a Kafka consumer group</parameter>
+            <parameter name="label">Consumer Group ID</parameter>
+            <parameter name="modes">Iterator</parameter>
+        </FormItem>
+        <FormItem name="includePrologs">
+            <parameter name="description">pro_desc</parameter>
+            <parameter name="label">pro_label</parameter>
+            <parameter name="script">selectGlobalProlog</parameter>
+            <parameter name="scriptLabel">pro_script_label</parameter>
+            <parameter name="scripthelp">pro_script_help</parameter>
+            <parameter name="syntax">textarea</parameter>
+        </FormItem>
+        <FormItem name="keepGlobalState">
+            <parameter name="description">SCRIPT_CONN_KEEP_GLOBAL_STATE_DESC</parameter>
+            <parameter name="label">SCRIPT_CONN_KEEP_GLOBAL_STATE_LABEL</parameter>
+            <parameter name="syntax">boolean</parameter>
+        </FormItem>
+        <FormItem name="key_attribute">
+            <ModTime>1776764267804</ModTime>
+            <parameter name="description">Output mapped attribute to use as the Kafka message key</parameter>
+            <parameter name="label">Message Key Attribute</parameter>
+        </FormItem>
+        <FormItem name="max_poll_records">
+            <ModTime>1776764099481</ModTime>
+            <parameter name="description">Maximum messages returned per poll call</parameter>
+            <parameter name="label">Max Poll Records</parameter>
+        </FormItem>
+        <FormItem name="partition">
+            <ModTime>1776867596189</ModTime>
+            <parameter name="description">The partition to send the message to. Leave back for default (0)</parameter>
+            <parameter name="label">Partition</parameter>
+        </FormItem>
+        <FormItem name="poll_timeout_ms">
+            <ModTime>1776764076497</ModTime>
+            <parameter name="description">How long to block waiting for messages per poll cycle</parameter>
+            <parameter name="label">Poll Timeout (ms)</parameter>
+        </FormItem>
+        <FormItem name="start_offset">
+            <ModTime>1776764300803</ModTime>
+            <parameter name="description">Optional. Force all partitions to start at this offset</parameter>
+            <parameter name="label">Start Offset</parameter>
+        </FormItem>
+        <FormItem name="topic">
+            <ModTime>1776764556404</ModTime>
+            <parameter name="Required">true</parameter>
+            <parameter name="description">Kafka topic to read from or write to</parameter>
+            <parameter name="label">Topic</parameter>
+            <parameter name="modes">Iterator, AddOnly</parameter>
+        </FormItem>
+        <FormSection name="Advanced">
+            <FormSectionNames>
+                <ListItem>client_id</ListItem>
+                <ListItem>partition</ListItem>
+                <ListItem>start_offset</ListItem>
+                <ListItem>poll_timeout_ms</ListItem>
+                <ListItem>max_poll_records</ListItem>
+                <ListItem>$GLOBAL.userComment</ListItem>
+                <ListItem>$GLOBAL.script</ListItem>
+            </FormSectionNames>
+            <parameter name="initiallyExpanded">false</parameter>
+            <parameter name="title">Advanced</parameter>
+        </FormSection>
+        <FormSection name="General">
+            <FormSectionNames>
+                <ListItem>connector_mode</ListItem>
+                <ListItem>bootstrap_servers</ListItem>
+                <ListItem>topic</ListItem>
+                <ListItem>group_id</ListItem>
+                <ListItem>auto_offset_reset</ListItem>
+                <ListItem>acks</ListItem>
+                <ListItem>key_attribute</ListItem>
+            </FormSectionNames>
+        </FormSection>
+        <parameter name="title">CONN_TITLE</parameter>
+        <TranslationFile>NLS/idi_conn_scriptconn</TranslationFile>
+    </Form>
+</MetamergeConfig>]]></parameter>
+            <parameter name="acks">1</parameter>
+            <parameter name="auto_offset_reset">latest</parameter>
+            <parameter name="bootstrap_servers">192.168.68.64:9092</parameter>
+            <parameter name="client_id">tdi-kafka-test</parameter>
+            <parameter name="connector_mode">client</parameter>
+            <parameter name="group_id">tdi-consumer-test</parameter>
+            <parameter name="includeFiles"/>
+            <parameter name="key_attribute">employeeId</parameter>
+            <parameter name="max_poll_records">100</parameter>
+            <parameter name="poll_timeout_ms">2000</parameter>
+            <parameter name="script"><![CDATA[// 20260418 1126 Initial
 // 20260419 1112 Added Claude code. Now to start reading
+// 20260421 2018 Iterator and AddOnly working
 
 // =============================================================================
 // KAFKA CONNECTOR — PARAMETER DEFINITIONS
@@ -400,6 +280,20 @@ var STRING_DESERIALIZER = 'org.apache.kafka.common.serialization.StringDeseriali
 // GENERAL HELPERS
 // =============================================================================
 
+// Centralized log function
+function logmsg(lvl, msg) {
+	if (typeof(msg) == "undefined") {
+		msg = lvl
+		lvl = "INFO"
+	}
+	
+	msg = msg || "";
+	lvl = lvl || "INFO";
+	
+	if (!(task instanceof com.ibm.di.server.AssemblyLine)) main.logmsg(lvl, msg)
+	else task.logmsg(lvl, msg)
+}
+
 // Safe parameter retrieval with fallback default
 function getParam(name, defaultVal) {
     var v = connector.getParam(name);
@@ -433,17 +327,32 @@ function buildProperties(map) {
     return props;
 }
 
-// Build a TDI Entry from a Kafka ConsumerRecord.
-// Shared by getNextEntry() and findEntry() for consistent attribute naming.
 function recordToEntry(rec) {
-    var e = system.newEntry();
-    e['kafka.topic']     = String(rec.topic());
-    e['kafka.partition'] = String(rec.partition());
-    e['kafka.offset']    = String(rec.offset());
-    e['kafka.key']       = rec.key()   != null ? String(rec.key())   : '';
-    e['kafka.value']     = rec.value() != null ? String(rec.value()) : '';
-    e['kafka.timestamp'] = String(rec.timestamp());
-    return e;
+	var e = system.newEntry();
+	e['kafka.topic']     = String(rec.topic());
+	e['kafka.partition'] = String(rec.partition());
+	e['kafka.offset']    = String(rec.offset());
+	e['kafka.key']       = rec.key() != null ? ('' + rec.key()).trim() : '';
+	e['kafka.timestamp'] = String(rec.timestamp());
+
+	var v = rec.value() != null ? ('' + rec.value()).trim() : '';
+
+	// Replacing dot in field names with underscore
+	var vFixed = v.replace(/"(\w+)\.(\w+)"\s*:/g, '"$1_$2":');
+
+	// Include top level fields, plus the property values of the kafka.value field and its value field
+	if (vFixed.indexOf('{') === 0 && vFixed.lastIndexOf('}') === vFixed.length - 1) {
+		var vObj  = fromJson(vFixed);
+		var v2    = vObj['kafka_value'];  // note: dot already replaced to underscore by this point
+		delete vObj['kafka_value'];
+
+		e.merge(e.fromJSON(toJson(vObj)));
+		if (v2 != null) {
+			e.merge(e.fromJSON(v2));
+		}
+	}
+
+	return e;
 }
 
 // Resolve message key from conn using key_attribute parameter.
@@ -451,7 +360,7 @@ function recordToEntry(rec) {
 function resolveKey() {
     var keyAttr = getParam('key_attribute', '');
     if (keyAttr === '') return null;
-    var keyVal = conn.getString(keyAttr);
+    var keyVal = entry.getString(keyAttr);
     return (keyVal != null && String(keyVal).trim() !== '') ? String(keyVal) : null;
 }
 
@@ -467,11 +376,11 @@ function resolveKey() {
 function getOrCreate(cacheKey, factory) {
     var cached = java.lang.System.getProperties().get(cacheKey);
     if (cached == null) {
-        task.logmsg('INFO', 'Creating ' + cacheKey);
+        logmsg('INFO', 'Creating ' + cacheKey);
         cached = factory();
         java.lang.System.getProperties().put(cacheKey, cached);
     } else {
-        task.logmsg('INFO', 'Reusing ' + cacheKey);
+        logmsg('INFO', 'Reusing ' + cacheKey);
     }
     return cached;
 }
@@ -481,9 +390,9 @@ function safeClose(client, label, cacheKey) {
     if (client == null) return null;
     try {
         client.close();
-        task.logmsg('INFO', label + ' closed');
+        logmsg('INFO', label + ' closed');
     } catch(ex) {
-        task.logmsg('WARN', 'Error closing ' + label + ': ' + getErrorMsg(ex));
+        logmsg('WARN', 'Error closing ' + label + ': ' + getErrorMsg(ex));
     }
     java.lang.System.getProperties().remove(cacheKey);
     return null;
@@ -560,7 +469,7 @@ function produceRecord(topic, key, value, operation) {
 
     try {
         __producer.send(record).get();
-        task.logmsg('INFO', 'Produced [' + operation + '] to ' + topic
+        logmsg('INFO', 'Produced [' + operation + '] to ' + topic
             + (key   != null ? ' key=' + key : ' (no key)')
             + (value == null ? ' (tombstone)' : ''));
     } catch(ex) {
@@ -584,7 +493,7 @@ function produceRecord(topic, key, value, operation) {
 
 function initialize() {
 
-    task.logmsg('INFO', 'Initializing: ' + connector.getName());
+    logmsg('INFO', 'Initializing: ' + connector.getName());
 
     __mode = getParam('connector_mode', 'client');
 
@@ -596,7 +505,7 @@ function initialize() {
         __producer       = getOrCreate(__cacheKeyProducer,       createProducer);
     }
 
-    task.logmsg('INFO', 'Initialized: ' + connector.getName());
+    logmsg('INFO', 'Initialized: ' + connector.getName());
 }
 
 
@@ -610,16 +519,16 @@ function initialize() {
 
 function terminate() {
 
-    task.logmsg('INFO', 'Terminating: ' + connector.getName());
+    logmsg('INFO', 'Terminating: ' + connector.getName());
 
     if (__consumer != null) {
         try { __consumer.commitSync(); }
-        catch(ex) { task.logmsg('WARN', 'Final commit failed: ' + getErrorMsg(ex)); }
+        catch(ex) { logmsg('WARN', 'Final commit failed: ' + getErrorMsg(ex)); }
     }
 
     if (__producer != null) {
         try { __producer.flush(); }
-        catch(ex) { task.logmsg('WARN', 'Producer flush failed: ' + getErrorMsg(ex)); }
+        catch(ex) { logmsg('WARN', 'Producer flush failed: ' + getErrorMsg(ex)); }
     }
 
     __consumer       = safeClose(__consumer,      'KafkaConsumer',        __cacheKeyConsumer);
@@ -666,7 +575,7 @@ function selectEntries() {
             __consumer.seek(tp, offset);
         }
 
-        task.logmsg('INFO', 'Assigned ' + tpList.size()
+        logmsg('INFO', 'Assigned ' + tpList.size()
             + ' partition(s) for topic ' + topic + ' seeked to offset ' + offset);
 
     } else {
@@ -674,7 +583,7 @@ function selectEntries() {
         var topicList = new java.util.ArrayList();
         topicList.add(topic);
         __consumer.subscribe(topicList);
-        task.logmsg('INFO', 'Subscribed to topic: ' + topic);
+        logmsg('INFO', 'Subscribed to topic: ' + topic);
 
     }
 
@@ -694,7 +603,7 @@ function selectEntries() {
 function getNextEntry() {
 
     if (__consumer == null) {
-        task.logmsg('ERROR', 'getNextEntry: consumer is null');
+        logmsg('ERROR', 'getNextEntry: consumer is null');
         return null;
     }
 
@@ -711,15 +620,16 @@ function getNextEntry() {
 
         for (var rec in records) { __msgBuffer.add(rec); }
 
-        task.logmsg('INFO', 'Polled ' + __msgBuffer.size() + ' message(s)');
+        logmsg('INFO', 'Polled ' + __msgBuffer.size() + ' message(s)');
     }
 
     var record = __msgBuffer.get(__bufferIndex++);
 
     try { __consumer.commitSync(); }
-    catch(ex) { task.logmsg('WARN', 'commitSync failed: ' + getErrorMsg(ex)); }
+    catch(ex) { logmsg('WARN', 'commitSync failed: ' + getErrorMsg(ex)); }
 
-    return recordToEntry(record);
+	var e = recordToEntry(record);
+    entry.merge(e)
 }
 
 
@@ -734,26 +644,25 @@ function getNextEntry() {
 
 function putEntry() {
 
-    if (__producer == null) {
-        throw new java.lang.RuntimeException('putEntry: producer is null');
-    }
+	if (__producer == null) {
+		throw new java.lang.RuntimeException('putEntry: producer is null');
+	}
 
-    var topic     = requireParam('topic', 'putEntry');
-    var key       = resolveKey();
-    var rawValue  = conn.getString('kafka.value');
-    var value     = (rawValue != null) ? conn.toJSON() : null;
-    var operation = (value == null) ? 'delete' : 'add';
+	var topic     = entry.getString("topic") || requireParam('topic', 'putEntry');
+	var key       = resolveKey();
+	var rawValue  = entry.toJSON();
+	var value     = (rawValue != null) ? entry.toJSON() : null;
+	var operation = (value == null) ? 'delete' : 'add';
 
-    if (value == null && key == null) {
-        throw new java.lang.RuntimeException(
-            'putEntry: cannot produce a tombstone without a message key. '
-            + 'Set key_attribute to identify which record to tombstone.'
-        );
-    }
+	if (value == null && key == null) {
+		throw new java.lang.RuntimeException(
+			'putEntry: cannot produce a tombstone without a message key. '
+			+ 'Set key_attribute to identify which record to tombstone.'
+		);
+	}
 
-    produceRecord(topic, key, value, operation);
+	produceRecord(topic, key, value, operation);
 }
-
 
 // =============================================================================
 // FIND ENTRY
@@ -769,90 +678,132 @@ function putEntry() {
 // record which we reject rather than return the wrong message.
 // =============================================================================
 
-function resolvePartition() {
-
-    var partitionStr = conn.getString('kafka.partition');
-
-    if (partitionStr != null && String(partitionStr).trim() !== '') {
-        return system.toInt(partitionStr);
-    }
-
-    var assigned = __lookupConsumer.assignment().toArray();
-
-    if (assigned.length === 1) {
-        task.logmsg('WARN',
-            'kafka.partition not in Link Criteria — falling back to partition '
-            + assigned[0].partition()
-            + '. Store kafka.partition from getNextEntry() to avoid this.');
-        return assigned[0].partition();
-    }
-
-    throw new java.lang.RuntimeException(
-        'findEntry: kafka.partition not supplied and '
-        + (assigned.length === 0
-            ? 'no partitions are currently assigned.'
-            : assigned.length + ' partitions are held — offset is ambiguous.')
-        + ' Supply kafka.partition in Link Criteria.'
-    );
-}
-
 function findEntry() {
+	if (__lookupConsumer == null) {
+		logmsg('ERROR', 'findEntry: lookup consumer is null');
+		result.setStatus(0);
+		return;
+	}
 
-    if (__lookupConsumer == null) {
-        task.logmsg('ERROR', 'findEntry: lookup consumer is null');
-        result.setStatus(0);
-        return;
-    }
+	try {
+		var lc           = getLinkCrit();
+		var topic        = lc.topic || getParam('topic', '');
+		var partitionNum = resolvePartition(lc, topic);
+		var pollMs       = java.lang.Long(system.toInt(getParam('poll_timeout_ms', '2000')));
+		var tp           = new org.apache.kafka.common.TopicPartition(topic, partitionNum);
+		var tpList       = new java.util.ArrayList();
+		tpList.add(tp);
+		__lookupConsumer.assign(tpList);
 
-    var offsetStr = conn.getString('kafka.offset');
-    if (offsetStr == null || String(offsetStr).trim() === '') {
-        task.logmsg('ERROR', 'findEntry: kafka.offset must be supplied in Link Criteria');
-        result.setStatus(0);
-        return;
-    }
+		var found = false;
 
-    try {
-        var topic        = requireParam('topic', 'findEntry');
-        var partitionNum = resolvePartition();
-        var targetOffset = system.toInt(offsetStr);
-        var tp           = new org.apache.kafka.common.TopicPartition(topic, partitionNum);
-        var tpList       = new java.util.ArrayList();
-        tpList.add(tp);
+		// --- Offset-based seek (fast, exact) ---
+		if (lc.offset != null && lc.offset.trim() !== '') {
+			var targetOffset = java.lang.Long(system.toInt(lc.offset));
+			__lookupConsumer.seek(tp, targetOffset);
+			logmsg('INFO', 'findEntry: seeking partition=' + partitionNum + ' offset=' + targetOffset);
 
-        __lookupConsumer.assign(tpList);
-        __lookupConsumer.seek(tp, targetOffset);
+			var records = __lookupConsumer.poll(java.time.Duration.ofMillis(pollMs)).records(tp);
+			for (var i = 0; i < records.size(); i++) {
+				var rec = records.get(i);
+				if (rec.offset() == targetOffset) {
+					connector.addFindEntry(recordToEntry(rec));
+					found = true;
+					logmsg('INFO', 'findEntry: found at partition=' + partitionNum + ' offset=' + targetOffset);
+					lastRec = rec;
+					break;
+				}
+				logmsg('WARN', 'findEntry: offset ' + targetOffset
+					+ ' not matched — may have been trimmed by retention policy');
+			}
 
-        task.logmsg('INFO', 'findEntry: seeking partition ' + partitionNum
-            + ' offset ' + targetOffset);
+		// --- Key-based scan (slower — scans partition from beginning) ---
+		} else {
+			// Accept 'key' directly, or the user's own attribute name if it matches key_attribute param
+			// e.g. employeeId: emp001 works if key_attribute = employeeId
+			var keyAttrName = getParam('key_attribute', '');
+			var targetKey   = lc['key'](keyAttrName !== '' ? lc[keyAttrName] : null) || lc['key'];
 
-        var records = __lookupConsumer.poll(
-            java.time.Duration.ofMillis(system.toInt(getParam('poll_timeout_ms', '2000')))
-        );
+			if (targetKey == null || targetKey.trim() === '') {
+				logmsg('ERROR', 'findEntry: supply offset or key (or ' + (keyAttrName || 'key_attribute') + ') in Link Criteria');
+				result.setStatus(0);
+				return;
+			}
 
-        var found = false;
+			logmsg('INFO', 'findEntry: scanning partition=' + partitionNum + ' for key=' + targetKey);
+			__lookupConsumer.seekToBeginning(tpList);
 
-        for (var rec in records) {
-            if (rec.partition() == partitionNum && rec.offset() == targetOffset) {
-                connector.addFindEntry(recordToEntry(rec));
-                found = true;
-                task.logmsg('INFO', 'findEntry: found at partition '
-                    + partitionNum + ' offset ' + targetOffset);
-                break;
-            }
-            task.logmsg('WARN', 'findEntry: got partition ' + rec.partition()
-                + ' offset ' + rec.offset()
-                + ' — target offset ' + targetOffset
-                + ' may have been removed by retention policy');
-        }
+			// Scan to end — keep last match (latest message wins on non-compacted topics)
+			var lastRec   = null;
+			var exhausted = false;
+			while (!exhausted) {
+				var batch = __lookupConsumer.poll(java.time.Duration.ofMillis(pollMs)).records(tp);
+				if (batch.size() === 0) {
+					exhausted = true;
+					break;
+				}
+				for (var i = 0; i < batch.size(); i++) {
+					var rec = batch.get(i);
+					if (rec.key() != null && ('' + rec.key()) === targetKey) {
+						lastRec = rec;
+					}
+				}
+			}
 
-        result.setStatus(found ? 1 : 0);
+		}
 
-    } catch(ex) {
-        task.logmsg('ERROR', 'findEntry failed: ' + getErrorMsg(ex));
-        result.setStatus(0);
-    }
+		if (lastRec != null) {
+			connector.addFindEntry(recordToEntry(lastRec));
+			found = true;
+			logmsg('INFO', 'findEntry: found key=' + targetKey + ' at offset=' + lastRec.offset());
+		} else {
+			logmsg('WARN', 'findEntry: key=' + targetKey + ' not found in partition=' + partitionNum);
+		}
+
+		result.setStatus(found ? 1 : 0);
+
+	} catch(ex) {
+		logmsg('ERROR', 'findEntry failed: ' + getErrorMsg(ex));
+		result.setStatus(0);
+	}
 }
 
+// Normalize link criteria keys — strip kafka. or kafka_ prefix
+// so users can write offset, key, partition OR kafka.offset etc.
+function getLinkCrit() {
+	var lc       = {};
+	var criteria = search.getCriteria();
+	for (var crit in criteria) {
+		var name = '' + crit.name;
+		if (name.indexOf('kafka.') === 0)      name = name.substring(6);
+		else if (name.indexOf('kafka_') === 0)  name = name.substring(6);
+		lc[name] = '' + crit.value;
+	}
+	return lc;
+}
+
+function resolvePartition(lc, topic) {
+	// 1. Link Criteria
+	if (lc.partition != null && lc.partition.trim() !== '') {
+		return system.toInt(lc.partition);
+	}
+	// 2. Connector param
+	var paramVal = getParam('partition', '');
+	if (paramVal !== '') {
+		return system.toInt(paramVal);
+	}
+	// 3. Single-partition topic fallback — ask the broker
+	var partitions = __lookupConsumer.partitionsFor(topic);
+	if (partitions.size() === 1) {
+		logmsg('WARN', 'partition not supplied — topic has only one partition, defaulting to 0');
+		return 0;
+	}
+	throw new java.lang.RuntimeException(
+		'findEntry: partition not supplied. '
+		+ 'Topic "' + topic + '" has ' + partitions.size() + ' partitions — cannot determine which to scan. '
+		+ 'Supply partition in Link Criteria or set the partition connector parameter.'
+	);
+}
 
 // =============================================================================
 // DELETE ENTRY
@@ -875,7 +826,7 @@ function deleteEntry() {
 
     if (key == null) {
         throw new java.lang.RuntimeException(
-            'deleteEntry: key_attribute must be set and have a value on conn. '
+            'deleteEntry: key_attribute must be set and have a value mapped to it. '
             + 'A tombstone without a key cannot identify which record to delete.'
         );
     }
@@ -885,7 +836,7 @@ function deleteEntry() {
 
 
 // =============================================================================
-// MOD ENTRY / QUERY REPLY — NOT SUPPORTED
+// MOD ENTRY / QUERY REPLY / LOOKUP — NOT SUPPORTED
 // Included as explicit stubs so unsupported calls surface a clear error
 // rather than a silent no-op or a confusing "function not defined" failure.
 // =============================================================================
@@ -903,58 +854,60 @@ function queryReply(requestEntry) {
         'queryReply() is not supported by this connector.'
     );
 }]]></parameter>
-                </Script>
-                <Script name="Pre_Test for Claude">
-                    <ModTime>1776622016726</ModTime>
-                    <parameter name="enabled">false</parameter>
-                    <parameter name="script"><![CDATA[try {
-    __consumer = new org.apache.kafka.clients.consumer.KafkaConsumer(buildProperties({
-        'bootstrap.servers':  getParam('bootstrap_servers', 'localhost:9092'),
-        'group.id':           getParam('group_id',          'tdi-consumer'),
-        'client.id':          getParam('client_id',         connector.getName() + '-consumer'),
-        'auto.offset.reset':  getParam('auto_offset_reset', 'latest'),
-        'max.poll.records':   getParam('max_poll_records',  '100'),
-        'enable.auto.commit': 'false',
-        'key.deserializer':   STRING_DESERIALIZER,
-        'value.deserializer': STRING_DESERIALIZER
-    }));
-} catch(ex) {
-    var e = ex;
-    while (e != null) {
-        task.logmsg('ERROR', 'Exception: ' + e);
-        e = (e.getCause && e.getCause() != null && e.getCause() != e) ? e.getCause() : null;
-    }
-    throw ex;
-}]]></parameter>
-                </Script>
-                <Script name="Test Connector functions">
-                    <ModTime>1776622158619</ModTime>
-                    <parameter name="script"><![CDATA[initialize();
-
-// === PUT A TEST MESSAGE ===
-// Build a conn entry with all producer-relevant attributes
-conn = system.newEntry();
-conn['kafka.value']  = '{"id":"emp001","name":"John Smith","dept":"HR","action":"test"}';
-conn['employeeId']   = 'emp001';   // matches key_attribute in testParams
-
-putEntry();
-
-// === READ IT BACK ===
-selectEntries();
-e = getNextEntry();
-
-task.logmsg((e == null) ? '* no data *' : e);]]></parameter>
-                </Script>
-                <Conditions/>
-                <MatchAny>false</MatchAny>
-                <Enabled>true</Enabled>
-                <Type>2</Type>
-            </Branch>
-        </ContainerDF>
-        <ThreadOptions/>
+            <parameter name="start_offset">0</parameter>
+            <parameter name="topic">TDI-topic</parameter>
+        </Configuration>
+        <Parser>
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </Parser>
+        <AttributeMap name="Input">
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </AttributeMap>
+        <AttributeMap name="Output">
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </AttributeMap>
+        <DeltaSettings>
+            <ModTime>1776765409906</ModTime>
+            <WhenToCommit>After every database operation</WhenToCommit>
+            <RowLocking>SERIALIZABLE</RowLocking>
+            <ChangeDetectionMode>DETECT_ALL</ChangeDetectionMode>
+        </DeltaSettings>
+        <Schema name="Input">
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </Schema>
+        <Schema name="Output">
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </Schema>
+        <LinkCriteria>
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </LinkCriteria>
+        <Hooks>
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
+        </Hooks>
+        <CheckpointConfig/>
+        <SandboxConfig/>
+        <Reconnect>
+            <InheritFrom>[parent]</InheritFrom>
+            <ReconnectRules/>
+        </Reconnect>
         <Operations/>
-        <InitParams>
-            <Schema name="AssemblyLineInitParams"/>
-        </InitParams>
-    </AssemblyLine>
+        <PoolDefinition>
+            <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763120479</ModTime>
+            <Enabled>false</Enabled>
+            <MinPoolSize>0</MinPoolSize>
+            <MaxPoolSize>0</MaxPoolSize>
+            <PurgeInterval>0</PurgeInterval>
+            <InitializeAttempts>1</InitializeAttempts>
+            <InitializeSleepInterval>0</InitializeSleepInterval>
+        </PoolDefinition>
+        <PoolInstance/>
+    </Connector>
 </MetamergeConfig>

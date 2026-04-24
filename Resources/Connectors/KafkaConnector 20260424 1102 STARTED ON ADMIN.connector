@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="1" UUID="1c13c314-9a83-4afb-9f1e-9c2c024ca822" created="Fri Apr 24 11:00:07 CEST 2026" createdBy="eddiehartman" main="KafkaConnector" modified="Fri Apr 24 11:00:07 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="68" UUID="7d572101-3ad3-49fa-b5ab-7915236ed3f9" created="Tue Apr 21 11:18:39 CEST 2026" createdBy="eddiehartman" main="KafkaConnector" modified="Thu Apr 23 12:38:49 CEST 2026" modifiedBy="eddiehartman" project="KafkaConnector" version="7.1.1">
     <Connector name="KafkaConnector">
         <InheritFrom>system:/Connectors/ibmdi.ScriptConnector</InheritFrom>
         <ModTime>1776940728768</ModTime>
@@ -6,6 +6,7 @@
         <ConnectorState>Enabled</ConnectorState>
         <Configuration>
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776940728768</ModTime>
             <parameter name="$form$"><![CDATA[<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="9" UUID="ae353aa2-d1d6-4714-9f48-9cdc6f357dd6" created="Tue Apr 21 11:19:03 CEST 2026" createdBy="eddiehartman" main="Form" modified="Wed Apr 22 16:21:05 CEST 2026" modifiedBy="eddiehartman" version="7.1.1">
     <Form name="Form">
         <ModTime>1776867664853</ModTime>
@@ -1096,29 +1097,37 @@ function queryReply(requestEntry) {
         </Configuration>
         <Parser>
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </Parser>
         <AttributeMap name="Input">
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </AttributeMap>
         <AttributeMap name="Output">
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </AttributeMap>
         <DeltaSettings>
+            <ModTime>1776765409906</ModTime>
             <WhenToCommit>After every database operation</WhenToCommit>
             <RowLocking>SERIALIZABLE</RowLocking>
             <ChangeDetectionMode>DETECT_ALL</ChangeDetectionMode>
         </DeltaSettings>
         <Schema name="Input">
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </Schema>
         <Schema name="Output">
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </Schema>
         <LinkCriteria>
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </LinkCriteria>
         <Hooks>
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763113579</ModTime>
         </Hooks>
         <CheckpointConfig/>
         <SandboxConfig/>
@@ -1129,6 +1138,7 @@ function queryReply(requestEntry) {
         <Operations/>
         <PoolDefinition>
             <InheritFrom>[parent]</InheritFrom>
+            <ModTime>1776763120479</ModTime>
             <Enabled>false</Enabled>
             <MinPoolSize>0</MinPoolSize>
             <MaxPoolSize>0</MaxPoolSize>

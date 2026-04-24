@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="54" UUID="019eea63-9080-4eea-bfcb-134e414a821b" created="Mon Mar 30 16:19:39 CEST 2026" createdBy="eddiehartman" main="_testScriptConnectorCode" modified="Sun Apr 19 21:02:53 CEST 2026" modifiedBy="eddiehartman" project="_RESTClientConnector" version="7.1.1">
+<?xml version="1.0" encoding="UTF-8"?><MetamergeConfig Cycle="55" UUID="019eea63-9080-4eea-bfcb-134e414a821b" created="Mon Mar 30 16:19:39 CEST 2026" createdBy="eddiehartman" main="test_ScriptConnectorCode" modified="Tue Apr 21 20:43:52 CEST 2026" modifiedBy="eddiehartman" project="_RESTClientConnector" version="7.1.1">
     <Container name="References"/>
     
 
 
-<AssemblyLine name="_testScriptConnectorCode">
-        <ModTime>1776625371987</ModTime>
+
+<AssemblyLine name="test_ScriptConnectorCode">
+        <ModTime>1776797031576</ModTime>
         <Settings>
             <parameter name="ALPoolSettingsDialog">showALPoolSettings</parameter>
             <parameter name="automapattributes">false</parameter>
@@ -38,7 +39,7 @@
         <LogConfig/>
         <ContainerEF name="EntryFeedContainer"/>
         <ContainerDF name="DataFlowContainer">
-            <ModTime>1776625371987</ModTime>
+            <ModTime>1776797031576</ModTime>
             <Script name="What kind of test is this?">
                 <ModTime>1776610073834</ModTime>
                 <parameter name="script">whatToTest = "connector"; // connector, init or event, last two Form scripts</parameter>
@@ -290,12 +291,13 @@ i = 42;]]></parameter>
                 <Type>1</Type>
             </Branch>
             <Branch name="Testing Connector Script">
-                <ModTime>1776625371987</ModTime>
+                <ModTime>1776797031576</ModTime>
                 <Script name="Connector Script">
-                    <ModTime>1776625371987</ModTime>
+                    <ModTime>1776797031576</ModTime>
                     <parameter name="enabled">true</parameter>
                     <parameter name="script"><![CDATA[// 20260418 1126 Initial
 // 20260419 1112 Added Claude code. Now to start reading
+// 20260421 2018 Iterator and AddOnly working
 
 // =============================================================================
 // KAFKA CONNECTOR — PARAMETER DEFINITIONS
@@ -405,6 +407,20 @@ var STRING_DESERIALIZER = 'org.apache.kafka.common.serialization.StringDeseriali
 // GENERAL HELPERS
 // =============================================================================
 
+// Centralized log function
+function logmsg(lvl, msg) {
+	if (typeof(msg) == "undefined") {
+		msg = lvl
+		lvl = "INFO"
+	}
+	
+	msg = msg || "";
+	lvl = lvl || "INFO";
+	
+	if (!(task instanceof com.ibm.di.server.AssemblyLine)) main.logmsg(lvl, msg)
+	else task.logmsg(lvl, msg)
+}
+
 // Safe parameter retrieval with fallback default
 function getParam(name, defaultVal) {
     var v = connector.getParam(name);
@@ -438,17 +454,32 @@ function buildProperties(map) {
     return props;
 }
 
-// Build a TDI Entry from a Kafka ConsumerRecord.
-// Shared by getNextEntry() and findEntry() for consistent attribute naming.
 function recordToEntry(rec) {
-    var e = system.newEntry();
-    e['kafka.topic']     = String(rec.topic());
-    e['kafka.partition'] = String(rec.partition());
-    e['kafka.offset']    = String(rec.offset());
-    e['kafka.key']       = rec.key()   != null ? String(rec.key())   : '';
-    e['kafka.value']     = rec.value() != null ? String(rec.value()) : '';
-    e['kafka.timestamp'] = String(rec.timestamp());
-    return e;
+	var e = system.newEntry();
+	e['kafka.topic']     = String(rec.topic());
+	e['kafka.partition'] = String(rec.partition());
+	e['kafka.offset']    = String(rec.offset());
+	e['kafka.key']       = rec.key() != null ? ('' + rec.key()).trim() : '';
+	e['kafka.timestamp'] = String(rec.timestamp());
+
+	var v = rec.value() != null ? ('' + rec.value()).trim() : '';
+
+	// Replacing dot in field names with underscore
+	var vFixed = v.replace(/"(\w+)\.(\w+)"\s*:/g, '"$1_$2":');
+
+	// Include top level fields, plus the property values of the kafka.value field and its value field
+	if (vFixed.indexOf('{') === 0 && vFixed.lastIndexOf('}') === vFixed.length - 1) {
+		var vObj  = fromJson(vFixed);
+		var v2    = vObj['kafka_value'];  // note: dot already replaced to underscore by this point
+		delete vObj['kafka_value'];
+
+		e.merge(e.fromJSON(toJson(vObj)));
+		if (v2 != null) {
+			e.merge(e.fromJSON(v2));
+		}
+	}
+
+	return e;
 }
 
 // Resolve message key from conn using key_attribute parameter.
@@ -456,7 +487,7 @@ function recordToEntry(rec) {
 function resolveKey() {
     var keyAttr = getParam('key_attribute', '');
     if (keyAttr === '') return null;
-    var keyVal = conn.getString(keyAttr);
+    var keyVal = entry.getString(keyAttr);
     return (keyVal != null && String(keyVal).trim() !== '') ? String(keyVal) : null;
 }
 
@@ -472,11 +503,11 @@ function resolveKey() {
 function getOrCreate(cacheKey, factory) {
     var cached = java.lang.System.getProperties().get(cacheKey);
     if (cached == null) {
-        task.logmsg('INFO', 'Creating ' + cacheKey);
+        logmsg('INFO', 'Creating ' + cacheKey);
         cached = factory();
         java.lang.System.getProperties().put(cacheKey, cached);
     } else {
-        task.logmsg('INFO', 'Reusing ' + cacheKey);
+        logmsg('INFO', 'Reusing ' + cacheKey);
     }
     return cached;
 }
@@ -486,9 +517,9 @@ function safeClose(client, label, cacheKey) {
     if (client == null) return null;
     try {
         client.close();
-        task.logmsg('INFO', label + ' closed');
+        logmsg('INFO', label + ' closed');
     } catch(ex) {
-        task.logmsg('WARN', 'Error closing ' + label + ': ' + getErrorMsg(ex));
+        logmsg('WARN', 'Error closing ' + label + ': ' + getErrorMsg(ex));
     }
     java.lang.System.getProperties().remove(cacheKey);
     return null;
@@ -565,7 +596,7 @@ function produceRecord(topic, key, value, operation) {
 
     try {
         __producer.send(record).get();
-        task.logmsg('INFO', 'Produced [' + operation + '] to ' + topic
+        logmsg('INFO', 'Produced [' + operation + '] to ' + topic
             + (key   != null ? ' key=' + key : ' (no key)')
             + (value == null ? ' (tombstone)' : ''));
     } catch(ex) {
@@ -589,7 +620,7 @@ function produceRecord(topic, key, value, operation) {
 
 function initialize() {
 
-    task.logmsg('INFO', 'Initializing: ' + connector.getName());
+    logmsg('INFO', 'Initializing: ' + connector.getName());
 
     __mode = getParam('connector_mode', 'client');
 
@@ -601,7 +632,7 @@ function initialize() {
         __producer       = getOrCreate(__cacheKeyProducer,       createProducer);
     }
 
-    task.logmsg('INFO', 'Initialized: ' + connector.getName());
+    logmsg('INFO', 'Initialized: ' + connector.getName());
 }
 
 
@@ -615,16 +646,16 @@ function initialize() {
 
 function terminate() {
 
-    task.logmsg('INFO', 'Terminating: ' + connector.getName());
+    logmsg('INFO', 'Terminating: ' + connector.getName());
 
     if (__consumer != null) {
         try { __consumer.commitSync(); }
-        catch(ex) { task.logmsg('WARN', 'Final commit failed: ' + getErrorMsg(ex)); }
+        catch(ex) { logmsg('WARN', 'Final commit failed: ' + getErrorMsg(ex)); }
     }
 
     if (__producer != null) {
         try { __producer.flush(); }
-        catch(ex) { task.logmsg('WARN', 'Producer flush failed: ' + getErrorMsg(ex)); }
+        catch(ex) { logmsg('WARN', 'Producer flush failed: ' + getErrorMsg(ex)); }
     }
 
     __consumer       = safeClose(__consumer,      'KafkaConsumer',        __cacheKeyConsumer);
@@ -671,7 +702,7 @@ function selectEntries() {
             __consumer.seek(tp, offset);
         }
 
-        task.logmsg('INFO', 'Assigned ' + tpList.size()
+        logmsg('INFO', 'Assigned ' + tpList.size()
             + ' partition(s) for topic ' + topic + ' seeked to offset ' + offset);
 
     } else {
@@ -679,7 +710,7 @@ function selectEntries() {
         var topicList = new java.util.ArrayList();
         topicList.add(topic);
         __consumer.subscribe(topicList);
-        task.logmsg('INFO', 'Subscribed to topic: ' + topic);
+        logmsg('INFO', 'Subscribed to topic: ' + topic);
 
     }
 
@@ -699,7 +730,7 @@ function selectEntries() {
 function getNextEntry() {
 
     if (__consumer == null) {
-        task.logmsg('ERROR', 'getNextEntry: consumer is null');
+        logmsg('ERROR', 'getNextEntry: consumer is null');
         return null;
     }
 
@@ -716,15 +747,16 @@ function getNextEntry() {
 
         for (var rec in records) { __msgBuffer.add(rec); }
 
-        task.logmsg('INFO', 'Polled ' + __msgBuffer.size() + ' message(s)');
+        logmsg('INFO', 'Polled ' + __msgBuffer.size() + ' message(s)');
     }
 
     var record = __msgBuffer.get(__bufferIndex++);
 
     try { __consumer.commitSync(); }
-    catch(ex) { task.logmsg('WARN', 'commitSync failed: ' + getErrorMsg(ex)); }
+    catch(ex) { logmsg('WARN', 'commitSync failed: ' + getErrorMsg(ex)); }
 
-    return recordToEntry(record);
+	var e = recordToEntry(record);
+    entry.merge(e)
 }
 
 
@@ -739,44 +771,29 @@ function getNextEntry() {
 
 function putEntry() {
 
-    if (__producer == null) {
-        throw new java.lang.RuntimeException('putEntry: producer is null');
-    }
+	if (__producer == null) {
+		throw new java.lang.RuntimeException('putEntry: producer is null');
+	}
 
-    var topic     = requireParam('topic', 'putEntry');
-    var key       = resolveKey();
-    var rawValue  = conn.getString('kafka.value');
-    var value     = (rawValue != null) ? conn.toJSON() : null;
-    var operation = (value == null) ? 'delete' : 'add';
+	var topic     = requireParam('topic', 'putEntry');
+	var key       = resolveKey();
+	var rawValue  = entry.getString('kafka.value');
+	var value     = (rawValue != null) ? entry.toJSON() : null;
+	var operation = (value == null) ? 'delete' : 'add';
 
-    if (value == null && key == null) {
-        throw new java.lang.RuntimeException(
-            'putEntry: cannot produce a tombstone without a message key. '
-            + 'Set key_attribute to identify which record to tombstone.'
-        );
-    }
+	if (value == null && key == null) {
+		throw new java.lang.RuntimeException(
+			'putEntry: cannot produce a tombstone without a message key. '
+			+ 'Set key_attribute to identify which record to tombstone.'
+		);
+	}
 
-    produceRecord(topic, key, value, operation);
+	produceRecord(topic, key, value, operation);
 }
-
-
-// =============================================================================
-// FIND ENTRY
-// Seeks the lookup consumer to an exact partition + offset and retrieves the
-// message at that position. The lookup consumer uses assign() only — no group
-// membership, no commits, no effect on broker state.
-//
-// Link Criteria must supply kafka.offset. kafka.partition is recommended but
-// falls back to the sole assigned partition if exactly one is held.
-//
-// The returned record's offset is validated against the target — if the target
-// has been trimmed by retention, Kafka silently returns the next available
-// record which we reject rather than return the wrong message.
-// =============================================================================
 
 function resolvePartition() {
 
-    var partitionStr = conn.getString('kafka.partition');
+    var partitionStr = entry.getString('kafka.partition');
 
     if (partitionStr != null && String(partitionStr).trim() !== '') {
         return system.toInt(partitionStr);
@@ -785,7 +802,7 @@ function resolvePartition() {
     var assigned = __lookupConsumer.assignment().toArray();
 
     if (assigned.length === 1) {
-        task.logmsg('WARN',
+        logmsg('WARN',
             'kafka.partition not in Link Criteria — falling back to partition '
             + assigned[0].partition()
             + '. Store kafka.partition from getNextEntry() to avoid this.');
@@ -801,17 +818,31 @@ function resolvePartition() {
     );
 }
 
+// =============================================================================
+// FIND ENTRY
+// Seeks the lookup consumer to an exact partition + offset and retrieves the
+// message at that position. The lookup consumer uses assign() only — no group
+// membership, no commits, no effect on broker state.
+//
+// Link Criteria must supply kafka.offset. kafka.partition is recommended but
+// falls back to the sole assigned partition if exactly one is held.
+//
+// The returned record's offset is validated against the target — if the target
+// has been trimmed by retention, Kafka silently returns the next available
+// record which we reject rather than return the wrong message.
+// =============================================================================
+
 function findEntry() {
 
     if (__lookupConsumer == null) {
-        task.logmsg('ERROR', 'findEntry: lookup consumer is null');
+        logmsg('ERROR', 'findEntry: lookup consumer is null');
         result.setStatus(0);
         return;
     }
 
-    var offsetStr = conn.getString('kafka.offset');
+    var offsetStr = entry.getString('kafka.offset');
     if (offsetStr == null || String(offsetStr).trim() === '') {
-        task.logmsg('ERROR', 'findEntry: kafka.offset must be supplied in Link Criteria');
+        logmsg('ERROR', 'findEntry: kafka.offset must be supplied in Link Criteria');
         result.setStatus(0);
         return;
     }
@@ -827,7 +858,7 @@ function findEntry() {
         __lookupConsumer.assign(tpList);
         __lookupConsumer.seek(tp, targetOffset);
 
-        task.logmsg('INFO', 'findEntry: seeking partition ' + partitionNum
+        logmsg('INFO', 'findEntry: seeking partition ' + partitionNum
             + ' offset ' + targetOffset);
 
         var records = __lookupConsumer.poll(
@@ -840,11 +871,11 @@ function findEntry() {
             if (rec.partition() == partitionNum && rec.offset() == targetOffset) {
                 connector.addFindEntry(recordToEntry(rec));
                 found = true;
-                task.logmsg('INFO', 'findEntry: found at partition '
+                logmsg('INFO', 'findEntry: found at partition '
                     + partitionNum + ' offset ' + targetOffset);
                 break;
             }
-            task.logmsg('WARN', 'findEntry: got partition ' + rec.partition()
+            logmsg('WARN', 'findEntry: got partition ' + rec.partition()
                 + ' offset ' + rec.offset()
                 + ' — target offset ' + targetOffset
                 + ' may have been removed by retention policy');
@@ -853,7 +884,7 @@ function findEntry() {
         result.setStatus(found ? 1 : 0);
 
     } catch(ex) {
-        task.logmsg('ERROR', 'findEntry failed: ' + getErrorMsg(ex));
+        logmsg('ERROR', 'findEntry failed: ' + getErrorMsg(ex));
         result.setStatus(0);
     }
 }
@@ -880,7 +911,7 @@ function deleteEntry() {
 
     if (key == null) {
         throw new java.lang.RuntimeException(
-            'deleteEntry: key_attribute must be set and have a value on conn. '
+            'deleteEntry: key_attribute must be set and have a value mapped to it. '
             + 'A tombstone without a key cannot identify which record to delete.'
         );
     }
@@ -890,7 +921,7 @@ function deleteEntry() {
 
 
 // =============================================================================
-// MOD ENTRY / QUERY REPLY — NOT SUPPORTED
+// MOD ENTRY / QUERY REPLY / LOOKUP — NOT SUPPORTED
 // Included as explicit stubs so unsupported calls surface a clear error
 // rather than a silent no-op or a confusing "function not defined" failure.
 // =============================================================================
